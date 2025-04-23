@@ -17,6 +17,8 @@ body { margin: 0; padding: 0; }
             <label><input type="checkbox" class="layer-toggle" value="resi-lotsize" checked> Lot size</label><br>
             <label><input type="checkbox" class="layer-toggle" value="frontage-tooshort"> Insufficient frontage</label><br>
             <label><input type="checkbox" class="layer-toggle" value="resi-toosmall"> Insufficient lot size</label>
+            <label><input type="checkbox" class="layer-toggle" value="parcels"> Parcels</label>
+            <label><input type="checkbox" class="layer-toggle" value="zones"> Existing Zoning</label>
           </div>
   </div>    
 <style>
@@ -209,9 +211,36 @@ const zonesAndColors = zones.flatMap((zone, i) => [zone, zoneColors[i]]);
             ],
     }
         });
+
+        map.addLayer({
+        id: 'zones',
+        type: 'fill',
+        source: 'existing',
+        paint: {
+            'fill-color': ['match', ['string', ['get', 'NAME']], ...zonesAndColors, '#AAAAAA'],
+            'fill-opacity': 1,
+    }
+        });
+
+        //this has to be last, remember
+        map.addLayer({
+        id: 'parcels',
+        type: 'fill',
+        source: 'existing',
+        paint: {
+            'fill-outline-color': 'black',
+            'fill-color': 'transparent',
+            'fill-opacity': 1,
+    }
+        });
+
+
+
         
         map.setLayoutProperty('frontage-tooshort', 'visibility', 'none');
-map.setLayoutProperty('resi-toosmall', 'visibility', 'none');
+        map.setLayoutProperty('resi-toosmall', 'visibility', 'none');
+        map.setLayoutProperty('parcels', 'visibility', 'none');
+        map.setLayoutProperty('zones', 'visibility', 'none');
 
 const checkboxes = document.querySelectorAll('.layer-toggle');
 
