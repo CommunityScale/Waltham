@@ -25,12 +25,11 @@
 <body>
     <div id="container">
         <div id="layer-controls">
+            <label><input type="checkbox" class="layer-toggle" value="parcels"> Parcels</label> 
             <label><input type="checkbox" class="layer-toggle" value="resi-lotsize" checked> Lot size</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="frontage-tooshort"> Insufficient
-                frontage</label><br>
+            <label><input type="checkbox" class="layer-toggle" value="frontage-tooshort"> Insufficient frontage</label><br>
             <label><input type="checkbox" class="layer-toggle" value="resi-toosmall"> Insufficient lot size</label>
-            <label><input type="checkbox" class="layer-toggle" value="parcels"> Parcels</label>
-            <label><input type="checkbox" class="layer-toggle" value="zones"> Existing Zoning</label>
+            <label><input type="checkbox" class="layer-toggle" value="zones"> Existing zoning</label>
         </div>
     </div>
     <style>
@@ -236,7 +235,7 @@
             });
 
 
-            //this has to be last, remember
+            //this has to be last
             map.addLayer({
                 id: 'parcels',
                 type: 'fill',
