@@ -74,8 +74,8 @@
             <div id="layer-controls">
                 <label><input type="checkbox" class="layer-toggle" value="parcels" checked> Parcels</label> 
                 <label><input type="checkbox" class="layer-toggle" value="Lot-Sizes-of-Residential-Parcels"> Lot size</label><br>
-                <label><input type="checkbox" class="layer-toggle" value="Too-Little-Frontage"> Insufficient frontage</label><br>
-                <label><input type="checkbox" class="layer-toggle" value="Residential-Parcels-Smaller-than-Minimum-Lot-Size"> Insufficient lot size</label>   
+                <label><input type="checkbox" class="layer-toggle" value="Too-Little-Frontage" checked> Insufficient frontage</label><br>
+                <label><input type="checkbox" class="layer-toggle" value="Residential-Parcels-Smaller-than-Minimum-Lot-Size" checked> Insufficient lot size</label>   
                 <label><input type="checkbox" class="layer-toggle" value="Overlay"> Overlays</label>        
                 <label><input type="checkbox" class="layer-toggle" value="Zones"> Existing zoning</label>
     
@@ -84,19 +84,19 @@
     <div id="map"></div>
     <div id="legend-container">
         <div id="frontageLegend" class="legend" style="display: block;">
-            <h4>Parcels</h4>
+
         </div>
         <div id="lotsizeLegend" class="legend" style="display: none;">
-            <h4>Parcels</h4>
+
         </div>
         <div id="toosmallLegend" class="legend" style="display: none;">
-            <h4>Parcels</h4>
+
         </div>
         <div id="overlayLegend" class="legend" style="display: none;">
-            <h4>Parcels</h4>
+
         </div>
         <div id="existzoneLegend" class="legend" style="display: none;">
-            <h4>Parcels</h4>
+
         </div>
     </div>
 
@@ -206,6 +206,11 @@ const legendEntries = {
                 data: 'resiparcels.geojson'
             });
 
+            map.addSource('Boundary', {
+                type: 'geojson',
+                data: 'walthamoutline.geojson'
+            });
+
             map.addSource('existing', {
                 type: 'geojson',
                 data: 'zoningexist2.geojson'
@@ -229,6 +234,16 @@ const legendEntries = {
                         '#E5E4E2' // default fallback color
                     ],
                     'fill-opacity': 1,
+                }
+            });
+
+            map.addLayer({
+                id: 'Boundary',
+                type: 'line',
+                source: 'Boundary',
+                paint: {
+                    'line-width': 2,
+                    'line-color': 'black',
                 }
             });
 
@@ -326,8 +341,8 @@ const legendEntries = {
             });
 
 
-            map.setLayoutProperty('Too-Little-Frontage', 'visibility', 'none');
-            map.setLayoutProperty('Residential-Parcels-Smaller-than-Minimum-Lot-Size', 'visibility', 'none');
+           // map.setLayoutProperty('Too-Little-Frontage', 'visibility', 'none');
+            //map.setLayoutProperty('Residential-Parcels-Smaller-than-Minimum-Lot-Size', 'visibility', 'none');
             map.setLayoutProperty('Lot-Sizes-of-Residential-Parcels', 'visibility', 'none');
             map.setLayoutProperty('Zones', 'visibility', 'none');
             map.setLayoutProperty('Overlay', 'visibility', 'none');
