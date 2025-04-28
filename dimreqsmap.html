@@ -37,21 +37,26 @@
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
         }
 
-        .legend {
-            background-color: #fff;
-            border-radius: 3px;
-            bottom: 30px;
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-            font:
-                12px/20px 'Helvetica Neue',
-                Arial,
-                Helvetica,
-                sans-serif;
-            padding: 10px;
-            position: absolute;
-            right: 10px;
-            z-index: 1;
-        }
+        #legend-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 250px; /* adjust if you want wider */
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    padding: 10px;
+    overflow-y: auto; /* scroll if too many */
+    max-height: 80vh; /* don't overflow screen */
+    z-index: 3;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12px;
+}
+
+.legend {
+    position: static; /* <-- change this from absolute to static */
+    margin-bottom: 10px; /* add some breathing room between legends */
+}
 
         .legend h4 {
             margin: 0 0 10px;
@@ -68,73 +73,33 @@
         <div id="container">
             <div id="layer-controls">
                 <label><input type="checkbox" class="layer-toggle" value="parcels" checked> Parcels</label> 
-                <label><input type="checkbox" class="layer-toggle" value="resi-lotsize"> Lot size</label><br>
-                <label><input type="checkbox" class="layer-toggle" value="frontage-tooshort"> Insufficient frontage</label><br>
-                <label><input type="checkbox" class="layer-toggle" value="resi-toosmall"> Insufficient lot size</label>   
-                <label><input type="checkbox" class="layer-toggle" value="overlay"> Overlays</label>        
-                <label><input type="checkbox" class="layer-toggle" value="zones"> Existing zoning</label>
+                <label><input type="checkbox" class="layer-toggle" value="Lot-Sizes-of-Residential-Parcels"> Lot size</label><br>
+                <label><input type="checkbox" class="layer-toggle" value="Too-Little-Frontage"> Insufficient frontage</label><br>
+                <label><input type="checkbox" class="layer-toggle" value="Residential-Parcels-Smaller-than-Minimum-Lot-Size"> Insufficient lot size</label>   
+                <label><input type="checkbox" class="layer-toggle" value="Overlay"> Overlays</label>        
+                <label><input type="checkbox" class="layer-toggle" value="Zones"> Existing zoning</label>
     
             </div>
         </div>
     <div id="map"></div>
-    <div id="parcelLegend" class="legend" style="display: block;">
-        <h4>Median Annual Household Income (2023, USD)</h4>
-        <div><span style="background-color: #980043"></span>$240,000 or more</div>
-        <div><span style="background-color: #dd1c77"></span></div>
-        <div><span style="background-color: #df65b0"></span></div>
-        <div><span style="background-color: #d7b5d8"></span></div>
-        <div><span style="background-color: #f1eef6"></span>$45,000 or less</div>
-        <div><span style="background-color: #425A7030"></span>No data</div>
+    <div id="legend-container">
+        <div id="frontageLegend" class="legend" style="display: block;">
+            <h4>Parcels</h4>
+        </div>
+        <div id="lotsizeLegend" class="legend" style="display: none;">
+            <h4>Parcels</h4>
+        </div>
+        <div id="toosmallLegend" class="legend" style="display: none;">
+            <h4>Parcels</h4>
+        </div>
+        <div id="overlayLegend" class="legend" style="display: none;">
+            <h4>Parcels</h4>
+        </div>
+        <div id="existzoneLegend" class="legend" style="display: none;">
+            <h4>Parcels</h4>
+        </div>
     </div>
-    <div id="frontageLegend" class="legend" style="display: block;">
-        <h4>Median Annual Household Income (2023, USD)</h4>
-        <div><span style="background-color: #980043"></span>$240,000 or more</div>
-        <div><span style="background-color: #dd1c77"></span></div>
-        <div><span style="background-color: #df65b0"></span></div>
-        <div><span style="background-color: #d7b5d8"></span></div>
-        <div><span style="background-color: #f1eef6"></span>$45,000 or less</div>
-        <div><span style="background-color: #425A7030"></span>No data</div>
-    </div>
-<div id="lotsizeLegend" class="legend" style="display: none;">
-        <h4>Cost Burdened Renters (2023)</h4>
-        <div><span style="background-color: #016c59"></span>70%+</div>
-        <div><span style="background-color: #1c9099"></span></div>
-        <div><span style="background-color: #67a9cf"></span>30%</div>
-        <div><span style="background-color: #bdc9e1"></span></div>
-        <div><span style="background-color: #f6eff7"></span>0%</div>
-        <div><span style="background-color: #425A7030"></span>No data</div>
-    </div>
-<div id="toosmallLegend" class="legend" style="display: none;">
-        <h4>Cost Burdened Homeowners (2023)</h4>
-        <div><span style="background-color: #810f7c"></span>70%+</div>
-        <div><span style="background-color: #8856a7"></span></div>
-        <div><span style="background-color: #8c96c6"></span>30%</div>
-        <div><span style="background-color: #b3cde3"></span></div>
-        <div><span style="background-color: #edf8fb"></span>0%</div>
-        <div><span style="background-color: #425A7030"></span>No data</div>
-    </div>
-<div id="overlayLegend" class="legend" style="display: none;">
-        <h4>Percent Change in Households (2010-2023)</h4>
-        <div><span style="background-color: #1b7837"></span>55%+</div>
-        <div><span style="background-color: #7fbf7b"></span></div>
-        <div><span style="background-color: #d9f0d3"></span></div>
-        <div><span style="background-color: #f7f7f7"></span>0%</div>
-        <div><span style="background-color: #e7d4e8"></span></div>
-        <div><span style="background-color: #af8dc3"></span></div>
-        <div><span style="background-color: #762a83"></span>-30%+</div>
-        <div><span style="background-color: #425A7030"></span>No data</div>
-    </div>
-    <div id="existzoneLegend" class="legend" style="display: none;">
-        <h4>Percent Change in Households (2010-2023)</h4>
-        <div><span style="background-color: #1b7837"></span>55%+</div>
-        <div><span style="background-color: #7fbf7b"></span></div>
-        <div><span style="background-color: #d9f0d3"></span></div>
-        <div><span style="background-color: #f7f7f7"></span>0%</div>
-        <div><span style="background-color: #e7d4e8"></span></div>
-        <div><span style="background-color: #af8dc3"></span></div>
-        <div><span style="background-color: #762a83"></span>-30%+</div>
-        <div><span style="background-color: #425A7030"></span>No data</div>
-    </div>
+
 
 
     <script>
@@ -184,6 +149,30 @@
             projection: 'globe'
         });
 
+const legendEntries = {
+    'Too-Little-Frontage': [
+        { color: '#5d0e27', label: 'Frontage narrower than required by zone' }
+    ],
+    'Residential-Parcels-Smaller-than-Minimum-Lot-Size': [
+        { color: '#bb1d4f', label: 'Lot smaller than required by zone' }
+    ],
+    'Lot-Sizes-of-Residential-Parcels': lotSizePalette.map((color, i) => ({
+        color: color,
+        label: `Bin ${i + 1}` // you could replace "Bin" with real sqft ranges if you want
+    })),
+    'Zones': zones.map((zone, i) => ({
+        color: zoneColors[i],
+        label: zone
+    })),
+    'Overlay': [
+        { color: 'black', label: 'ROD' },
+        { color: '#0040fe', label: 'LCRAP' },
+        { color: '#21abe6', label: 'LCRA' },
+        { color: '#9971ff', label: 'MCMOD' },
+        { color: '#006663', label: 'MBTAW' }
+    ]
+};
+
         map.on('load', () => {
             // Set the default atmosphere style
             map.setFog({});
@@ -219,7 +208,7 @@
             });            
 
             map.addLayer({
-                id: 'resi-toosmall',
+                id: 'Residential-Parcels-Smaller-than-Minimum-Lot-Size',
                 type: 'fill',
                 source: 'resipar',
                 paint: {
@@ -227,15 +216,15 @@
                     'fill-color': [
                         'match',
                         ['get', 'LotTooSmal'],
-                        1, '#5465ff',
-                        '#10104B' // default fallback color
+                        1, '#BB1D4F',
+                        '#E5E4E2' // default fallback color
                     ],
-                    'fill-opacity': .9,
+                    'fill-opacity': 1,
                 }
             });
 
             map.addLayer({
-                id: 'resi-lotsize',
+                id: 'Lot-Sizes-of-Residential-Parcels',
                 type: 'fill',
                 source: 'resipar',
                 paint: {
@@ -271,7 +260,7 @@
             });
 
             map.addLayer({
-                id: 'zones',
+                id: 'Zones',
                 type: 'fill',
                 source: 'existing',
                 paint: {
@@ -293,7 +282,7 @@
             });
 
             map.addLayer({
-                id: 'frontage-tooshort',
+                id: 'Too-Little-Frontage',
                 type: 'line',
                 source: 'frontage',
                 paint: {
@@ -301,14 +290,15 @@
                     'line-color': [
                         'match',
                         ['get', 'TooLilFrnt'],
-                        1, '#BB1D4F',
+                        1, '#5d0e27',
+                        
                         'rgba(14,7,27,0)' // default fallback color
                     ],
                 }
             });
 
             map.addLayer({
-                id: 'overlay',
+                id: 'Overlay',
                 type: 'line',
                 source: 'overlays',
                 paint: {
@@ -327,44 +317,57 @@
             });
 
 
-            map.setLayoutProperty('frontage-tooshort', 'visibility', 'none');
-            map.setLayoutProperty('resi-toosmall', 'visibility', 'none');
-            map.setLayoutProperty('resi-lotsize', 'visibility', 'none');
-            map.setLayoutProperty('zones', 'visibility', 'none');
-            map.setLayoutProperty('overlay', 'visibility', 'none');
+            map.setLayoutProperty('Too-Little-Frontage', 'visibility', 'none');
+            map.setLayoutProperty('Residential-Parcels-Smaller-than-Minimum-Lot-Size', 'visibility', 'none');
+            map.setLayoutProperty('Lot-Sizes-of-Residential-Parcels', 'visibility', 'none');
+            map.setLayoutProperty('Zones', 'visibility', 'none');
+            map.setLayoutProperty('Overlay', 'visibility', 'none');
+
 
             const checkboxes = document.querySelectorAll('.layer-toggle');
 
-            checkboxes.forEach((checkbox) => {
-                checkbox.addEventListener('change', () => {
-                    const layerId = checkbox.value;
-                    const visibility = checkbox.checked ? 'visible' : 'none';
-                    if (map.getLayer(layerId)) {
-                        map.setLayoutProperty(layerId, 'visibility', visibility);
-                    }
-                });
-            });
+const legends = {
+    'Too-Little-Frontage': 'frontageLegend',
+    'Residential-Parcels-Smaller-than-Minimum-Lot-Size': 'toosmallLegend',
+    'Lot-Sizes-of-Residential-Parcels': 'lotsizeLegend',
+    'Zones': 'existzoneLegend',
+    'Overlay': 'overlayLegend'
+};
 
-            document.getElementById('layer-dropdown').addEventListener('change', function() {
-        var legends = document.querySelectorAll('.legend');
-        legends.forEach(function(legend) {
-        legend.style.display = 'none';
-            });
+checkboxes.forEach((checkbox) => {
+    checkbox.addEventListener('change', () => {
+        const layerId = checkbox.value;
+        const visibility = checkbox.checked ? 'visible' : 'none';
+        if (map.getLayer(layerId)) {
+            map.setLayoutProperty(layerId, 'visibility', visibility);
+        }
 
-        var selectedLayer = checkbox.value;
-        if (selectedLayer === 'frontage-tooshort') {
-            document.getElementById('frontageLegend').style.display = 'block';
-        }   else if (selectedLayer === 'resi-toosmall') {
-            document.getElementById('toosmallLegend').style.display = 'block';
-        }   else if (selectedLayer === 'resi-lotsize') {
-            document.getElementById('lotsizeLegend').style.display = 'block';
-        }   else if (selectedLayer === 'zones') {
-            document.getElementById('existzoneLegend').style.display = 'block';
-        }   else if (selectedLayer === 'parcels') {
-            document.getElementById('parcelLegend').style.display = 'block';
-        }   else if (selectedLayer === 'overlay') {
-            document.getElementById('overlayLegend').style.display = 'block';
-        }});
+        // Update all legends
+        Object.keys(legends).forEach(layer => {
+            const legendId = legends[layer];
+            const legendElement = document.getElementById(legendId);
+            const matchingCheckbox = Array.from(checkboxes).find(cb => cb.value === layer);
+
+            if (matchingCheckbox && matchingCheckbox.checked) {
+                legendElement.style.display = 'block';
+                
+                // Build the content dynamically
+                if (legendEntries[layer]) {
+                    legendElement.innerHTML = `
+                        <h4>${layer.replace(/-/g, ' ')}</h4>
+                        ${legendEntries[layer].map(entry => `
+                            <div>
+                                <span style="background:${entry.color};"></span>${entry.label}
+                            </div>
+                        `).join('')}
+                    `;
+                }
+            } else {
+                legendElement.style.display = 'none';
+            }
+        });
+    });
+});
 
 
         });
