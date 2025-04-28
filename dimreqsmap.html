@@ -25,11 +25,13 @@
 <body>
     <div id="container">
         <div id="layer-controls">
-            <label><input type="checkbox" class="layer-toggle" value="parcels"> Parcels</label> 
-            <label><input type="checkbox" class="layer-toggle" value="resi-lotsize" checked> Lot size</label><br>
+            <label><input type="checkbox" class="layer-toggle" value="parcels" checked> Parcels</label> 
+            <label><input type="checkbox" class="layer-toggle" value="resi-lotsize"> Lot size</label><br>
             <label><input type="checkbox" class="layer-toggle" value="frontage-tooshort"> Insufficient frontage</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="resi-toosmall"> Insufficient lot size</label>
+            <label><input type="checkbox" class="layer-toggle" value="resi-toosmall"> Insufficient lot size</label>   
+            <label><input type="checkbox" class="layer-toggle" value="overlay"> Overlays</label>        
             <label><input type="checkbox" class="layer-toggle" value="zones"> Existing zoning</label>
+
         </div>
     </div>
     <style>
@@ -152,10 +154,13 @@
 
             map.addSource('existing', {
                 type: 'geojson',
-                data: 'zoningexist.geojson'
+                data: 'zoningexist2.geojson'
             });
 
-
+            map.addSource('overlays', {
+                type: 'geojson',
+                data: 'overlays.geojson'
+            });            
 
             map.addLayer({
                 id: 'resi-toosmall',
@@ -219,12 +224,14 @@
                 }
             });
 
+
+
             map.addLayer({
                 id: 'frontage-tooshort',
                 type: 'line',
                 source: 'frontage',
                 paint: {
-                    'line-width': 2,
+                    'line-width': 3,
                     'line-color': [
                         'match',
                         ['get', 'TooLilFrnt'],
@@ -247,13 +254,31 @@
                 }
             });
 
-
+            map.addLayer({
+                id: 'overlay',
+                type: 'line',
+                source: 'overlays',
+                paint: {
+                    'line-width': 4,
+                    'line-color': [
+                        'match',
+                        ['get', 'NAME'],
+                        'ROD', 'black',
+                        'LCRAP', '#0040fe',
+                        'LCRA', '#21abe6',
+                        'MCMOD', '#9971ff',
+                        'MBTAW', '#006663',
+                        'transparent' // default fallback color
+                    ],
+                }
+            });
 
 
             map.setLayoutProperty('frontage-tooshort', 'visibility', 'none');
             map.setLayoutProperty('resi-toosmall', 'visibility', 'none');
-            map.setLayoutProperty('parcels', 'visibility', 'none');
+            map.setLayoutProperty('resi-lotsize', 'visibility', 'none');
             map.setLayoutProperty('zones', 'visibility', 'none');
+            map.setLayoutProperty('overlay', 'visibility', 'none');
 
             const checkboxes = document.querySelectorAll('.layer-toggle');
 
