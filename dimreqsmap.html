@@ -23,17 +23,7 @@
 </head>
 
 <body>
-    <div id="container">
-        <div id="layer-controls">
-            <label><input type="checkbox" class="layer-toggle" value="parcels" checked> Parcels</label> 
-            <label><input type="checkbox" class="layer-toggle" value="resi-lotsize"> Lot size</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="frontage-tooshort"> Insufficient frontage</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="resi-toosmall"> Insufficient lot size</label>   
-            <label><input type="checkbox" class="layer-toggle" value="overlay"> Overlays</label>        
-            <label><input type="checkbox" class="layer-toggle" value="zones"> Existing zoning</label>
 
-        </div>
-    </div>
     <style>
         #layer-controls {
             position: absolute;
@@ -41,7 +31,7 @@
             left: 10px;
             background: white;
             padding: 10px;
-            font-size: 14px;
+            font: 14px Arial;
             z-index: 2;
             border-radius: 4px;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
@@ -75,9 +65,75 @@
             width: 10px;
         }
     </style>
+        <div id="container">
+            <div id="layer-controls">
+                <label><input type="checkbox" class="layer-toggle" value="parcels" checked> Parcels</label> 
+                <label><input type="checkbox" class="layer-toggle" value="resi-lotsize"> Lot size</label><br>
+                <label><input type="checkbox" class="layer-toggle" value="frontage-tooshort"> Insufficient frontage</label><br>
+                <label><input type="checkbox" class="layer-toggle" value="resi-toosmall"> Insufficient lot size</label>   
+                <label><input type="checkbox" class="layer-toggle" value="overlay"> Overlays</label>        
+                <label><input type="checkbox" class="layer-toggle" value="zones"> Existing zoning</label>
+    
+            </div>
+        </div>
     <div id="map"></div>
-    <div id="state-legend" class="legend">
-        <div><span style="background-color: #5465ff"></span>Lot size is smaller than minimum</div>
+    <div id="parcelLegend" class="legend" style="display: block;">
+        <h4>Median Annual Household Income (2023, USD)</h4>
+        <div><span style="background-color: #980043"></span>$240,000 or more</div>
+        <div><span style="background-color: #dd1c77"></span></div>
+        <div><span style="background-color: #df65b0"></span></div>
+        <div><span style="background-color: #d7b5d8"></span></div>
+        <div><span style="background-color: #f1eef6"></span>$45,000 or less</div>
+        <div><span style="background-color: #425A7030"></span>No data</div>
+    </div>
+    <div id="frontageLegend" class="legend" style="display: block;">
+        <h4>Median Annual Household Income (2023, USD)</h4>
+        <div><span style="background-color: #980043"></span>$240,000 or more</div>
+        <div><span style="background-color: #dd1c77"></span></div>
+        <div><span style="background-color: #df65b0"></span></div>
+        <div><span style="background-color: #d7b5d8"></span></div>
+        <div><span style="background-color: #f1eef6"></span>$45,000 or less</div>
+        <div><span style="background-color: #425A7030"></span>No data</div>
+    </div>
+<div id="lotsizeLegend" class="legend" style="display: none;">
+        <h4>Cost Burdened Renters (2023)</h4>
+        <div><span style="background-color: #016c59"></span>70%+</div>
+        <div><span style="background-color: #1c9099"></span></div>
+        <div><span style="background-color: #67a9cf"></span>30%</div>
+        <div><span style="background-color: #bdc9e1"></span></div>
+        <div><span style="background-color: #f6eff7"></span>0%</div>
+        <div><span style="background-color: #425A7030"></span>No data</div>
+    </div>
+<div id="toosmallLegend" class="legend" style="display: none;">
+        <h4>Cost Burdened Homeowners (2023)</h4>
+        <div><span style="background-color: #810f7c"></span>70%+</div>
+        <div><span style="background-color: #8856a7"></span></div>
+        <div><span style="background-color: #8c96c6"></span>30%</div>
+        <div><span style="background-color: #b3cde3"></span></div>
+        <div><span style="background-color: #edf8fb"></span>0%</div>
+        <div><span style="background-color: #425A7030"></span>No data</div>
+    </div>
+<div id="overlayLegend" class="legend" style="display: none;">
+        <h4>Percent Change in Households (2010-2023)</h4>
+        <div><span style="background-color: #1b7837"></span>55%+</div>
+        <div><span style="background-color: #7fbf7b"></span></div>
+        <div><span style="background-color: #d9f0d3"></span></div>
+        <div><span style="background-color: #f7f7f7"></span>0%</div>
+        <div><span style="background-color: #e7d4e8"></span></div>
+        <div><span style="background-color: #af8dc3"></span></div>
+        <div><span style="background-color: #762a83"></span>-30%+</div>
+        <div><span style="background-color: #425A7030"></span>No data</div>
+    </div>
+    <div id="existzoneLegend" class="legend" style="display: none;">
+        <h4>Percent Change in Households (2010-2023)</h4>
+        <div><span style="background-color: #1b7837"></span>55%+</div>
+        <div><span style="background-color: #7fbf7b"></span></div>
+        <div><span style="background-color: #d9f0d3"></span></div>
+        <div><span style="background-color: #f7f7f7"></span>0%</div>
+        <div><span style="background-color: #e7d4e8"></span></div>
+        <div><span style="background-color: #af8dc3"></span></div>
+        <div><span style="background-color: #762a83"></span>-30%+</div>
+        <div><span style="background-color: #425A7030"></span>No data</div>
     </div>
 
 
@@ -288,6 +344,28 @@
                     }
                 });
             });
+
+            document.getElementById('layer-dropdown').addEventListener('change', function() {
+        var legends = document.querySelectorAll('.legend');
+        legends.forEach(function(legend) {
+        legend.style.display = 'none';
+            });
+
+        var selectedLayer = checkbox.value;
+        if (selectedLayer === 'frontage-tooshort') {
+            document.getElementById('frontageLegend').style.display = 'block';
+        }   else if (selectedLayer === 'resi-toosmall') {
+            document.getElementById('toosmallLegend').style.display = 'block';
+        }   else if (selectedLayer === 'resi-lotsize') {
+            document.getElementById('lotsizeLegend').style.display = 'block';
+        }   else if (selectedLayer === 'zones') {
+            document.getElementById('existzoneLegend').style.display = 'block';
+        }   else if (selectedLayer === 'parcels') {
+            document.getElementById('parcelLegend').style.display = 'block';
+        }   else if (selectedLayer === 'overlay') {
+            document.getElementById('overlayLegend').style.display = 'block';
+        }});
+
 
         });
 
