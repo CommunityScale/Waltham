@@ -310,15 +310,6 @@ const legendEntries = {
                 data: 'existinguse.geojson'
             });     
 
-            map.addLayer({
-                id: 'Zones',
-                type: 'fill',
-                source: 'existing',
-                paint: {
-                    'fill-color': ['match', ['string', ['get', 'NAME']], ...zonesAndColors, '#AAAAAA'],
-                    'fill-opacity': 1,
-                }
-            });
 
             map.addLayer({
                 id: 'Uses',
@@ -329,6 +320,17 @@ const legendEntries = {
                     'fill-opacity': 1,
                 }
             });
+
+            map.addLayer({
+                id: 'Zones',
+                type: 'fill',
+                source: 'existing',
+                paint: {
+                    'fill-color': ['match', ['string', ['get', 'NAME']], ...zonesAndColors, '#AAAAAA'],
+                    'fill-opacity': 1,
+                }
+            });
+
 
             map.addLayer({
                 id: 'Lot-Sizes-of-Residential-Parcels',
