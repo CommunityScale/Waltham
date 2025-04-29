@@ -114,12 +114,12 @@
     </style>
         <div id="container">
             <div id="layer-controls">
-                <label><input type="checkbox" class="layer-toggle" value="parcels" checked> Parcels</label> 
+                <label><input type="checkbox" class="layer-toggle" value="Parcels" checked> Parcels</label><br>
                 <label><input type="checkbox" class="layer-toggle" value="Lot-Sizes-of-Residential-Parcels"> Lot size</label><br>
                 <label><input type="checkbox" class="layer-toggle" value="Too-Little-Frontage" checked> Insufficient frontage</label><br>
-                <label><input type="checkbox" class="layer-toggle" value="Residential-Parcels-Smaller-than-Minimum-Lot-Size" checked> Insufficient lot size</label>   
-                <label><input type="checkbox" class="layer-toggle" value="Overlay"> Overlays</label>        
-                <label><input type="checkbox" class="layer-toggle" value="Zones" checked> Existing zoning</label>
+                <label><input type="checkbox" class="layer-toggle" value="Residential-Parcels-Smaller-than-Minimum-Lot-Size" checked> Insufficient lot size</label><br>   
+                <label><input type="checkbox" class="layer-toggle" value="Overlay"> Overlays</label><br>        
+                <label><input type="checkbox" class="layer-toggle" value="Zones" checked> Existing zoning</label><br>
                 <label><input type="checkbox" class="layer-toggle" value="Uses"> Existing use</label>
             </div>
         </div>
@@ -286,7 +286,7 @@ const legendEntries = {
 
             map.addSource('allparcels', {
                 type: 'geojson',
-                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/allparcels.geojson',
+                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/existinguse.geojson',
                 promoteId: "LOC_ID"
             });
 
@@ -300,15 +300,12 @@ const legendEntries = {
                 data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/water2.geojson'
             });     
 
-            map.addSource('uses', {
-                type: 'geojson',
-                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/existinguse.geojson'
-            });   
             
+
             map.addLayer({
                 id: 'Uses',
                 type: 'fill',
-                source: 'uses',
+                source: 'allparcels',
                 paint: {
                     'fill-color': ['match', ['string', ['get', 'SimplLU']], ...usesAndColors, '#AAAAAA'],
                     'fill-opacity': [
@@ -318,7 +315,6 @@ const legendEntries = {
                     1],
                 }
             });
-
 
             map.addLayer({
                 id: 'Zones',
@@ -390,7 +386,7 @@ const legendEntries = {
 
         
             map.addLayer({
-                id: 'parcels',
+                id: 'Parcels',
                 type: 'fill',
                 source: 'allparcels',
                 paint: {
@@ -558,8 +554,9 @@ checkboxes.forEach((checkbox) => {
 let hoveredGeoId = null;
 
 const hoverLayers = [
-    { id: 'Zones', source: 'allparcels'},
-    {id: 'Lot-Sizes-of-Residential-Parcels', source: 'allparcels'}  
+    {id: 'Zones', source: 'allparcels'},
+    {id: 'Lot-Sizes-of-Residential-Parcels', source: 'allparcels'},
+    {id: 'Uses', source: 'allparcels'} 
 ];
 
 hoverLayers.forEach(({ id, source }) => {
@@ -593,7 +590,7 @@ hoverLayers.forEach(({ id, source }) => {
 
 map.on('click', (e) => {
         const [selectedParcel] = map.queryRenderedFeatures(e.point, {               
-            layers: ["Zones"]
+            layers: ["Zones", "Uses", "Lot-Sizes-of-Residential-Parcels"]
         });
 
         if (selectedParcel) {
@@ -608,7 +605,13 @@ map.on('click', (e) => {
             const result = sliceStringBySpaces(address, num);
 
             const zone = selectedParcel.properties.NAME;
-            const displayZone = zone === null || zone === undefined ? 'No available data' : `Zoning code: ${zone}`;
+            const displayZone = zone === null || zone === undefined ? 'No available data' : `Zoning district: ${zone}`;
+            const use = selectedParcel.properties.SimplLU;
+            const displayUse = use === null || use === undefined ? 'No available data' : `Current use: ${use}`;
+            const lotSize = selectedParcel.properties.SQFT;
+            const roundedLotSize = Math.round(lotSize*10)/10
+            const displaySize = lotSize === null || lotSize === undefined ? 'No available data' : `Lot size: ${roundedLotSize} square feet`;
+
 
             new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
             .setLngLat(selectedParcel.geometry.coordinates[0][0])
@@ -616,7 +619,7 @@ map.on('click', (e) => {
                 <div class="mapboxgl-popup">
                 <div class="mapboxgl-popup-close-button">x</div>
                 <div class="mapboxgl-popup-header">${result}</div>
-                <div class="mapboxgl-popup-content">${displayZone}
+                <div class="mapboxgl-popup-content">${displayZone}<br>${displayUse}<br>${displaySize}
                 </div>
             </div>`)
             .addTo(map);
