@@ -159,6 +159,23 @@
             "Nursing ho"
         ]
 
+        const useLabels = {
+            "Public/Ins": "Public/Institutional (including open space)",
+            "Single-fam": "Single-family",
+            "Two-family": "Two-family",
+            "Three-fami": "Three-family",
+            "Multi-fami": "Multi-family",
+            "Other hous": "Other housing",
+            "Hotel": "Hotel",
+            "Commercial": "Commercial (retail, office)",
+            "Mixed-use": "Mixed-use",
+            "Recreation": "Recreation",
+            "Industrial": "Industrial, auto, utility, storage",
+            "Vacant": "Vacant",
+            "Nursing ho": "Public/Institutional (including open space)",
+            "Other": "Other use"
+            };
+
         const useColors = [
             "#d4f088", // green
             "#fff9dc", // light yellow
@@ -607,10 +624,11 @@ map.on('click', (e) => {
             const zone = selectedParcel.properties.NAME;
             const displayZone = zone === null || zone === undefined ? 'No available data' : `Zoning district: ${zone}`;
             const use = selectedParcel.properties.SimplLU;
-            const displayUse = use === null || use === undefined ? 'No available data' : `Current use: ${use}`;
+            const useDescription = useLabels[use] || "Unknown use";
+            const displayUse = use === null || use === undefined ? 'Unknown use' : `Current use: ${useDescription}`;
             const lotSize = selectedParcel.properties.SQFT;
-            const roundedLotSize = Math.round(lotSize*10)/10
-            const displaySize = lotSize === null || lotSize === undefined ? 'No available data' : `Lot size: ${roundedLotSize} square feet`;
+            const roundedLotSize = Math.round(lotSize)
+            const displaySize = lotSize === null || lotSize === undefined ? 'No available data' : `Lot size: ${roundedLotSize.toLocaleString("en-US")} square feet`;
 
 
             new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
