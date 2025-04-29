@@ -46,7 +46,7 @@
 
         .mapboxgl-popup-header {
             margin: 0px;
-            font-size: 16px;
+            font-size: 14px;
             color: #fff;
             font-weight: bold;
             padding: 5px;
@@ -121,7 +121,6 @@
                 <label><input type="checkbox" class="layer-toggle" value="Overlay"> Overlays</label>        
                 <label><input type="checkbox" class="layer-toggle" value="Zones" checked> Existing zoning</label>
                 <label><input type="checkbox" class="layer-toggle" value="Uses"> Existing use</label>
-    
             </div>
         </div>
     <div id="map"></div>
@@ -144,63 +143,63 @@
         ]
 
         const uses = [
-  "Public/Ins",
-  "Single-fam",
-  "Vacant",
-  "Multi-fami",
-  "Industrial",
-  "Three-fami",
-  "Two-family",
-  "Other hous",
-  "Commercial",
-  "Mixed-use",
-  "Other",
-  "Hotel",
-  "Recreation",
-  "Nursing ho"
-]
-       
-const useColors = [
-  "#d4f088", // green
-  "#fff9dc", // light yellow
-  "#FFFFFF", // white
-  "#f18c1b", // orange
-  "#d5d5d5", // gray
-  "#f5b72d", // warmest yellow
-  "#f4dd63", // yellow
-  "#cf820f", // brown
-  "#f2b1c2", // pink
-  "#d899dd", // fuchsia
-  "#767676", // black
-  "#ff6969", // peach
-  "#8adfa9", // green (again)
-  "#cf820f"  // 
-];
+            "Public/Ins",
+            "Single-fam",
+            "Vacant",
+            "Multi-fami",
+            "Industrial",
+            "Three-fami",
+            "Two-family",
+            "Other hous",
+            "Commercial",
+            "Mixed-use",
+            "Other",
+            "Hotel",
+            "Recreation",
+            "Nursing ho"
+        ]
 
+        const useColors = [
+            "#d4f088", // green
+            "#fff9dc", // light yellow
+            "#FFFFFF", // white
+            "#f18c1b", // orange
+            "#d5d5d5", // gray
+            "#f5b72d", // warmest yellow
+            "#f4dd63", // yellow
+            "#cf820f", // brown
+            "#f2b1c2", // pink
+            "#d899dd", // fuchsia
+            "#767676", // black
+            "#ff6969", // peach
+            "#8adfa9", // green (again)
+            "#cf820f"  // 
+            ];
+        
         const usesAndColors = uses.flatMap((use, i) => [use, useColors[i]]);
 
         const zones = ['BA', 'BB', 'BC', 'C', 'CR', 'HR1', 'HR2', 'I', 'LC', 'RA1', 'RA2', 'RA3', 'RA4', 'RB', 'RC', 'RD']
        
-       const zoneColors = [
-           "#ffb3b3", // BA
-           "#f26b6b", // BB
-           "#a82940", // BC
-           "#f7d8d8", // C
-           "#bdd66b", // CR
-           "#0057e7", // HR1
-           "#734ac3", // HR2
-           "#b3b3b3", // I
-           "#b7a4ff", // LC
-           "#fff9dc", // RA1
-           "#fff099", // RA2
-           "#f4dd63", // RA3
-           "#f5b72d", // RA4
-           "#f18c1b", // RB
-           "#c87a12", // RC
-           "#a55a00"  // RD
-       ];
+        const zoneColors = [
+            "#ffb3b3", // BA
+            "#f26b6b", // BB
+            "#a82940", // BC
+            "#f7d8d8", // C
+            "#bdd66b", // CR
+            "#0057e7", // HR1
+            "#734ac3", // HR2
+            "#b3b3b3", // I
+            "#b7a4ff", // LC
+            "#fff9dc", // RA1
+            "#fff099", // RA2
+            "#f4dd63", // RA3
+            "#f5b72d", // RA4
+            "#f18c1b", // RB
+            "#c87a12", // RC
+            "#a55a00"  // RD
+        ];
 
-       const zonesAndColors = zones.flatMap((zone, i) => [zone, zoneColors[i]]);
+        const zonesAndColors = zones.flatMap((zone, i) => [zone, zoneColors[i]]);
 
         mapboxgl.accessToken = 'pk.eyJ1Ijoic2FyYWJyZW50IiwiYSI6ImNtMHpsb2Q4NTAwemoybHExbnB6eHVvZ2kifQ.nH0hUSv3IGzX6MkYB_cSmA';
         const map = new mapboxgl.Map({
@@ -212,7 +211,7 @@ const useColors = [
             projection: 'globe'
         });
 
-const lotSizeBreakpoints = [0, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000];        
+const lotSizeBreakpoints = [0, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000];                
 const legendEntries = {
     'Too-Little-Frontage': [
         { color: 'black', label: 'Frontage narrower than required by zone' }
@@ -277,40 +276,49 @@ const legendEntries = {
 
             map.addSource('frontage', {
                 type: 'geojson',
-                data: 'frontages.geojson'
+                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/frontages.geojson'
             });
 
             //map.addSource('resipar', {
-                //type: 'geojson',
-                //data: 'allparcels.geojson'
+            //    type: 'geojson',
+            //    data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/allparcels.geojson'
             //});
 
             map.addSource('Boundary', {
                 type: 'geojson',
-                data: 'walthamoutline.geojson'
+                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/walthamoutline.geojson'
             });
 
-            map.addSource('parcels', {
+            map.addSource('allparcels', {
                 type: 'geojson',
-                data: 'allparcels.geojson',
-                promoteId: 'LOC_ID'
+                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/allparcels.geojson',
+                promoteId: "LOC_ID"
             });
 
             map.addSource('overlays', {
                 type: 'geojson',
-                data: 'overlays.geojson'
-            });        
+                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/overlays.geojson'
+            });    
             
             map.addSource('water', {
                 type: 'geojson',
-                data: 'water2.geojson'
+                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/water2.geojson'
             });     
 
             map.addSource('uses', {
                 type: 'geojson',
-                data: 'existinguse.geojson'
-            });     
-
+                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/existinguse.geojson'
+            });   
+            
+            map.addLayer({
+                id: 'Uses',
+                type: 'fill',
+                source: 'uses',
+                paint: {
+                    'fill-color': ['match', ['string', ['get', 'SimplLU']], ...usesAndColors, '#AAAAAA'],
+                    'fill-opacity': 1,
+                }
+            });
 
             map.addLayer({
                 id: 'Uses',
@@ -325,22 +333,21 @@ const legendEntries = {
             map.addLayer({
                 id: 'Zones',
                 type: 'fill',
-                source: 'parcels',
+                source: 'allparcels',
                 paint: {
                     'fill-color': ['match', ['string', ['get', 'NAME']], ...zonesAndColors, '#AAAAAA'],
                     'fill-opacity': [
                     "case",
                     ["boolean", ["feature-state", "hover"], false],
                     0.5,
-                    1],
-                }
-            });
-
+                    1]
+                }}
+            );
 
             map.addLayer({
                 id: 'Lot-Sizes-of-Residential-Parcels',
                 type: 'fill',
-                source: 'parcels',
+                source: 'allparcels',
                 paint: {
                     'fill-outline-color': 'white',
                     'fill-color': [
@@ -380,7 +387,7 @@ const legendEntries = {
             map.addLayer({
                 id: 'Residential-Parcels-Smaller-than-Minimum-Lot-Size',
                 type: 'fill',
-                source: 'parcels',
+                source: 'allparcels',
                 paint: {
                     'fill-color': [
                         'match',
@@ -395,7 +402,7 @@ const legendEntries = {
             map.addLayer({
                 id: 'parcels',
                 type: 'fill',
-                source: 'existing',
+                source: 'allparcels',
                 paint: {
                     'fill-outline-color': 'black',
                     'fill-color': 'transparent',
@@ -416,7 +423,7 @@ const legendEntries = {
                         'transparent' // default fallback color
                     ],
                 }
-            } );
+            });
 
             map.addLayer({
                 id: 'Overlay',
@@ -437,7 +444,6 @@ const legendEntries = {
                 }
             });
 
-
             map.addLayer({
                 id: 'Boundary',
                 type: 'line',
@@ -447,7 +453,6 @@ const legendEntries = {
                     'line-color': 'black',
                 }
             });
-
 
             map.addLayer({
                 id: 'water',
@@ -461,6 +466,10 @@ const legendEntries = {
             //map.setLayoutProperty('Zones', 'visibility', 'none');
             map.setLayoutProperty('Overlay', 'visibility', 'none');
             map.setLayoutProperty('Uses', 'visibility', 'none');
+            map.setLayoutProperty('settlement-major-label', 'visibility', 'visible');
+            map.setLayoutProperty('settlement-subdivision-label', 'visibility', 'visible');
+            map.setLayoutProperty('settlement-minor-label', 'visibility', 'visible');
+            map.moveLayer('road-label', 'Zones');
 
             const checkboxes = document.querySelectorAll('.layer-toggle');
 
@@ -469,7 +478,6 @@ const legends = {
     'Residential-Parcels-Smaller-than-Minimum-Lot-Size': 'toosmallLegend',
     'Lot-Sizes-of-Residential-Parcels': 'lotsizeLegend',
     'Zones': 'existzoneLegend',
-    'Uses' : 'useLegend',
     'Overlay': 'overlayLegend'
 };
 
@@ -479,6 +487,10 @@ checkboxes.forEach((checkbox) => {
         const visibility = checkbox.checked ? 'visible' : 'none';
         if (map.getLayer(layerId)) {
             map.setLayoutProperty(layerId, 'visibility', visibility);
+            map.setLayoutProperty('settlement-major-label', 'visibility', 'visible');
+            map.setLayoutProperty('settlement-subdivision-label', 'visibility', 'visible');
+            map.setLayoutProperty('settlement-minor-label', 'visibility', 'visible');
+            map.setLayoutProperty('road-label', 'visibility', 'visible');
         }
 
         // Instead of trying to show/hide predefined legends, let's dynamically rebuild
@@ -507,8 +519,6 @@ checkboxes.forEach((checkbox) => {
                 legendContainer.appendChild(legendSection);
             }
         });
-
-                map.setLayoutProperty("road-label", 'visibility', 'visible');
     });
 });
 
@@ -558,8 +568,8 @@ checkboxes.forEach((checkbox) => {
 let hoveredGeoId = null;
 
 const hoverLayers = [
-    { id: 'Zones', source: 'parcels'},
-    {id: 'Lot-Sizes-of-Residential-Parcels', source: 'parcels'}  
+    { id: 'Zones', source: 'allparcels'},
+    {id: 'Lot-Sizes-of-Residential-Parcels', source: 'allparcels'}  
 ];
 
 hoverLayers.forEach(({ id, source }) => {
@@ -621,8 +631,6 @@ map.on('click', (e) => {
             </div>`)
             .addTo(map);
     }});
-
-        });
 
         });
 
