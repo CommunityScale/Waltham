@@ -280,17 +280,17 @@ const legendEntries = {
                 data: 'frontages.geojson'
             });
 
-            map.addSource('resipar', {
-                type: 'geojson',
-                data: 'allparcels.geojson'
-            });
+            //map.addSource('resipar', {
+                //type: 'geojson',
+                //data: 'allparcels.geojson'
+            //});
 
             map.addSource('Boundary', {
                 type: 'geojson',
                 data: 'walthamoutline.geojson'
             });
 
-            map.addSource('existing', {
+            map.addSource('parcels', {
                 type: 'geojson',
                 data: 'allparcels.geojson'
             });
@@ -324,10 +324,14 @@ const legendEntries = {
             map.addLayer({
                 id: 'Zones',
                 type: 'fill',
-                source: 'existing',
+                source: 'parcels',
                 paint: {
                     'fill-color': ['match', ['string', ['get', 'NAME']], ...zonesAndColors, '#AAAAAA'],
-                    'fill-opacity': 1,
+                    'fill-opacity': [
+                    "case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.5,
+                    1],
                 }
             });
 
@@ -335,7 +339,7 @@ const legendEntries = {
             map.addLayer({
                 id: 'Lot-Sizes-of-Residential-Parcels',
                 type: 'fill',
-                source: 'existing',
+                source: 'parcels',
                 paint: {
                     'fill-outline-color': 'white',
                     'fill-color': [
@@ -364,14 +368,18 @@ const legendEntries = {
                             20000,
                             lotSizePalette[9]
                         ]],
-                    'fill-opacity': 1,
+                    'fill-opacity': [
+                    "case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.5,
+                    1],
                 }
             });
 
             map.addLayer({
                 id: 'Residential-Parcels-Smaller-than-Minimum-Lot-Size',
                 type: 'fill',
-                source: 'existing',
+                source: 'parcels',
                 paint: {
                     'fill-color': [
                         'match',
@@ -545,6 +553,75 @@ checkboxes.forEach((checkbox) => {
         rebuildLegend(); // Refresh the legend dynamically
     });
 });
+
+let hoveredGeoId = null;
+
+const hoverLayers = [
+    { id: 'Zones', source: 'parcels'},
+    {id: 'Lot-Sizes-of-Residential-Parcels', source: 'parcels'}  
+];
+
+hoverLayers.forEach(({ id, source }) => {
+    map.on('mousemove', id, (e) => {
+        if (e.features.length > 0) {
+            if (hoveredGeoId !== null) {
+                map.setFeatureState(
+                    { source, id: hoveredGeoId },
+                    { hover: false }
+                );
+            }
+            hoveredGeoId = e.features[0].id;
+            map.setFeatureState(
+                { source, id: hoveredGeoId },
+                { hover: true }
+            );
+        }
+    });
+
+    map.on('mouseleave', id, () => {
+        if (hoveredGeoId !== null) {
+            map.setFeatureState(
+                { source, id: hoveredGeoId },
+                { hover: false }
+            );
+        }
+        hoveredGeoId = null;
+    });
+});
+
+
+map.on('click', (e) => {
+        const [selectedParcel] = map.queryRenderedFeatures(e.point, {               
+            layers: ["Zones"]
+        });
+
+        if (selectedParcel) {
+            function sliceStringBySpaces(str, numSpaces) {
+            const words = str.split(" ");
+            const slicedWords = words.slice(0, numSpaces);
+            return slicedWords.join(" ");
+        }
+
+            const address = selectedParcel.properties.Address.replace(/,/g, "");
+            const num = 4;
+            const result = sliceStringBySpaces(address, num);
+
+            const zone = selectedParcel.properties.NAME;
+            const displayZone = zone === null || zone === undefined ? 'No available data' : `Zoning code: ${zone}`;
+
+            new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
+            .setLngLat(selectedParcel.geometry.coordinates[0][0])
+            .setHTML(`
+                <div class="mapboxgl-popup">
+                <div class="mapboxgl-popup-close-button">x</div>
+                <div class="mapboxgl-popup-header">${result}</div>
+                <div class="mapboxgl-popup-content">${displayZone}
+                </div>
+            </div>`)
+            .addTo(map);
+    }});
+
+        });
 
         });
 
