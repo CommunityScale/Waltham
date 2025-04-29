@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Display a globe on a webpage</title>
+    <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+    <link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+        }
+
+        #map {
+            width: 100%;
+            flex-shrink: 1;
+            height: 100%;
+        }
+
+       .mapboxgl-popup {
+            width: 175px;
+            font: 12px/20px 'Roboto', sans-serif;
+            background-color: #425A70;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            display: block;
+            padding: 0;
+            margin: 0;
+        }
+
+        .mapboxgl-popup .mapboxgl-popup-tip {
+            display: none;
+        }
+
+        .mapboxgl-popup-close-button {
+            top: 2px; 
+            right: 4px; 
+            width: 7px;
+            height: 7px;
+            color: #fff; 
+        }
+
+        .mapboxgl-popup-header {
+            margin: 0px;
+            font-size: 16px;
+            color: #fff;
+            font-weight: bold;
+            padding: 5px;
+        }
+    
+        .mapboxgl-popup-content {
+            font-size: 12px;
+            color: black;
+            margin-left: 0px;
+            padding: 8px;
+            background-color: #fff;
+            line-height: 1.25;
+        }
+
+    </style>
+</head>
+
+<body>
+
+    <style>
+        #layer-controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: white;
+            padding: 10px;
+            font: 14px Arial;
+            z-index: 2;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+        }
+
+        #legend-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 250px; /* adjust if you want wider */
+    background: white;
+    border-radius: 6px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.3);
+    padding: 10px;
+    overflow-y: auto; /* scroll if too many */
+    max-height: 80vh; /* don't overflow screen */
+    z-index: 3;
+    font-family: 'Helvetica Neue', Arial, sans-serif;
+    font-size: 12px;
+}
+
+.legend {
+    position: static; /* <-- change this from absolute to static */
+    margin-bottom: 10px; /* add some breathing room between legends */
+}
+
+        .legend h4 {
+            margin: 0 0 10px;
+        }
+
+        .legend div span {
+            border-radius: 50%;
+            display: inline-block;
+            height: 10px;
+            margin-right: 5px;
+            width: 10px;
+        }
+    </style>
+        <div id="container">
+            <div id="layer-controls">
+                <label><input type="checkbox" class="layer-toggle" value="parcels" checked> Parcels</label> 
+                <label><input type="checkbox" class="layer-toggle" value="Lot-Sizes-of-Residential-Parcels"> Lot size</label><br>
+                <label><input type="checkbox" class="layer-toggle" value="Too-Little-Frontage" checked> Insufficient frontage</label><br>
+                <label><input type="checkbox" class="layer-toggle" value="Residential-Parcels-Smaller-than-Minimum-Lot-Size" checked> Insufficient lot size</label>   
+                <label><input type="checkbox" class="layer-toggle" value="Overlay"> Overlays</label>        
+                <label><input type="checkbox" class="layer-toggle" value="Zones" checked> Existing zoning</label>
+                <label><input type="checkbox" class="layer-toggle" value="Uses"> Existing use</label>
+    
+            </div>
+        </div>
+    <div id="map"></div>
+    <div id="legend-container"></div>
+
+
+
+    <script>
+        const lotSizePalette = [ //blue ramp
+            '#E2FDFF',
+            '#D1EAFF',
+            '#BFD7FF',
+            '#9BB1FF',
+            '#8A9EFF',
+            '#788BFF',
+            '#5465FF',
+            '#333FAC',
+            '#1C2790',
+            '#0D1667'
+        ]
+
+        const uses = [
+  "Public/Ins",
+  "Single-fam",
+  "Vacant",
+  "Multi-fami",
+  "Industrial",
+  "Three-fami",
+  "Two-family",
+  "Other hous",
+  "Commercial",
+  "Mixed-use",
+  "Other",
+  "Hotel",
+  "Recreation",
+  "Nursing ho"
+]
+       
+const useColors = [
+  "#d4f088", // green
+  "#fff9dc", // light yellow
+  "#FFFFFF", // white
+  "#f18c1b", // orange
+  "#d5d5d5", // gray
+  "#f5b72d", // warmest yellow
+  "#f4dd63", // yellow
+  "#cf820f", // brown
+  "#f2b1c2", // pink
+  "#d899dd", // fuchsia
+  "#767676", // black
+  "#ff6969", // peach
+  "#8adfa9", // green (again)
+  "#cf820f"  // 
+];
+
+        const usesAndColors = uses.flatMap((use, i) => [use, useColors[i]]);
+
+        const zones = ['BA', 'BB', 'BC', 'C', 'CR', 'HR1', 'HR2', 'I', 'LC', 'RA1', 'RA2', 'RA3', 'RA4', 'RB', 'RC', 'RD']
+       
+       const zoneColors = [
+           "#ffb3b3", // BA
+           "#f26b6b", // BB
+           "#a82940", // BC
+           "#f7d8d8", // C
+           "#bdd66b", // CR
+           "#0057e7", // HR1
+           "#734ac3", // HR2
+           "#b3b3b3", // I
+           "#b7a4ff", // LC
+           "#fff9dc", // RA1
+           "#fff099", // RA2
+           "#f4dd63", // RA3
+           "#f5b72d", // RA4
+           "#f18c1b", // RB
+           "#c87a12", // RC
+           "#a55a00"  // RD
+       ];
+
+       const zonesAndColors = zones.flatMap((zone, i) => [zone, zoneColors[i]]);
+
+        mapboxgl.accessToken = 'pk.eyJ1Ijoic2FyYWJyZW50IiwiYSI6ImNtMHpsb2Q4NTAwemoybHExbnB6eHVvZ2kifQ.nH0hUSv3IGzX6MkYB_cSmA';
+        const map = new mapboxgl.Map({
+            container: 'map',
+            // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
+            style: 'mapbox://styles/mapbox/light-v11',
+            zoom: 15,
+            center: [-71.236618, 42.378266],
+            projection: 'globe'
+        });
+
+const lotSizeBreakpoints = [0, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000];        
+const legendEntries = {
+    'Too-Little-Frontage': [
+        { color: 'black', label: 'Frontage narrower than required by zone' }
+    ],
+    'Residential-Parcels-Smaller-than-Minimum-Lot-Size': [
+        { color: 'rgba(0, 0, 0, .2)', label: 'Lot smaller than required by zone' }
+    ],
+    'Lot-Sizes-of-Residential-Parcels': [
+        { color: lotSizePalette[0], label: 'Smaller than 4,000 sqft' },
+        { color: lotSizePalette[1], label: '4,000-5,000 sqft' },
+        { color: lotSizePalette[2], label: '5,000-6,000 sqft' },
+        { color: lotSizePalette[3], label: '6,000-7,000 sqft' },
+        { color: lotSizePalette[4], label: '7,000-8,000 sqft' },
+        { color: lotSizePalette[5], label: '8,000-9,000 sqft' },
+        { color: lotSizePalette[6], label: '9,000-10,000 sqft' },
+        { color: lotSizePalette[7], label: '10,000-15,000 sqft' },
+        { color: lotSizePalette[8], label: '15,000-20,000 sqft' },
+        { color: lotSizePalette[9], label: '20,000+ sqft' }
+    ],
+    'Zones': zones.map((zone, i) => ({
+        color: zoneColors[i],
+        label: zone
+    })),
+    'Uses': [
+    { color: useColors[1], label: 'Single-family' },
+    { color: useColors[6], label: 'Two-family' },
+    { color: useColors[5], label: 'Three-family' },
+    { color: useColors[3], label: 'Multi-family' },
+    { color: useColors[7], label: 'Other housing' },
+    { color: useColors[11], label: 'Hotel' },
+    { color: useColors[8], label: 'Commercial (retail, office)' },
+        { color: useColors[9], label: 'Mixed-use' },
+        { color: useColors[12], label: 'Recreation' },
+    { color: useColors[4], label: 'Industrial, auto, utility, storage' },
+        { color: useColors[0], label: 'Public/Institutional (including open space)' },
+        { color: useColors[2], label: 'Vacant' },
+        { color: useColors[10], label: 'Other use' },
+],
+
+    'Overlay': [
+        { color: 'black', label: 'ROD' },
+        { color: '#0040fe', label: 'LCRAP' },
+        { color: '#21abe6', label: 'LCRA' },
+        { color: '#9971ff', label: 'MCMOD/MBTABR' },
+        { color: '#006663', label: 'MBTAW' }
+    ]
+};
+
+        map.on('load', () => {
+            // Set the default atmosphere style
+            map.setFog({});
+
+            map.addSource('mapillary', {
+                'type': 'vector',
+                'tiles': [
+                    'https://tiles.mapillary.com/maps/vtp/mly1_public/2/{z}/{x}/{y}?access_token=MLY|4142433049200173|72206abe5035850d6743b23a49c41333'
+                ],
+                'minzoom': 8,
+                'maxzoom': 14
+            })
+
+
+            map.addSource('frontage', {
+                type: 'geojson',
+                data: 'frontages.geojson'
+            });
+
+            map.addSource('resipar', {
+                type: 'geojson',
+                data: 'allparcels.geojson'
+            });
+
+            map.addSource('Boundary', {
+                type: 'geojson',
+                data: 'walthamoutline.geojson'
+            });
+
+            map.addSource('existing', {
+                type: 'geojson',
+                data: 'allparcels.geojson'
+            });
+
+            map.addSource('overlays', {
+                type: 'geojson',
+                data: 'overlays.geojson'
+            });        
+            
+            map.addSource('water', {
+                type: 'geojson',
+                data: 'water2.geojson'
+            });     
+
+            map.addSource('uses', {
+                type: 'geojson',
+                data: 'existinguse.geojson'
+            });     
+
+
+            map.addLayer({
+                id: 'Uses',
+                type: 'fill',
+                source: 'uses',
+                paint: {
+                    'fill-color': ['match', ['string', ['get', 'SimplLU']], ...usesAndColors, '#AAAAAA'],
+                    'fill-opacity': 1,
+                }
+            });
+
+            map.addLayer({
+                id: 'Zones',
+                type: 'fill',
+                source: 'existing',
+                paint: {
+                    'fill-color': ['match', ['string', ['get', 'NAME']], ...zonesAndColors, '#AAAAAA'],
+                    'fill-opacity': 1,
+                }
+            });
+
+
+            map.addLayer({
+                id: 'Lot-Sizes-of-Residential-Parcels',
+                type: 'fill',
+                source: 'existing',
+                paint: {
+                    'fill-outline-color': 'white',
+                    'fill-color': [
+                        "case", ["==", ["get", "SQFT"], null], 'white',
+                        ["interpolate",
+                            ["linear"],
+                            ["get", "SQFT"],
+                            0,
+                            lotSizePalette[0],
+                            4000,
+                            lotSizePalette[1],
+                            5000,
+                            lotSizePalette[2],
+                            6000,
+                            lotSizePalette[3],
+                            7000,
+                            lotSizePalette[4],
+                            8000,
+                            lotSizePalette[5],
+                            9000,
+                            lotSizePalette[6],
+                            10000,
+                            lotSizePalette[7],
+                            15000,
+                            lotSizePalette[8],
+                            20000,
+                            lotSizePalette[9]
+                        ]],
+                    'fill-opacity': 1,
+                }
+            });
+
+            map.addLayer({
+                id: 'Residential-Parcels-Smaller-than-Minimum-Lot-Size',
+                type: 'fill',
+                source: 'existing',
+                paint: {
+                    'fill-color': [
+                        'match',
+                        ['get', 'LotTooSmal'],
+                        1, 'rgba(0, 0, 0, .25)',
+                        'rgba(0, 0, 0, 0)' // default fallback color
+                    ]
+                }
+            });
+
+        
+            map.addLayer({
+                id: 'parcels',
+                type: 'fill',
+                source: 'existing',
+                paint: {
+                    'fill-outline-color': 'black',
+                    'fill-color': 'transparent',
+                    'fill-opacity': 1,
+                }
+            });
+
+            map.addLayer({
+                id: 'Too-Little-Frontage',
+                type: 'line',
+                source: 'frontage',
+                paint: {
+                    'line-width': 4,
+                    'line-color': [
+                        'match',
+                        ['get', 'TooLilFrnt'],
+                        1, 'black',
+                        'transparent' // default fallback color
+                    ],
+                }
+            } );
+
+            map.addLayer({
+                id: 'Overlay',
+                type: 'line',
+                source: 'overlays',
+                paint: {
+                    'line-width': 4,
+                    'line-color': [
+                        'match',
+                        ['get', 'NAME'],
+                        'ROD', 'black',
+                        'LCRAP', '#0040fe',
+                        'LCRA', '#21abe6',
+                        'MCMOD', '#9971ff',
+                        'MBTAW', '#006663',
+                        'transparent' // default fallback color
+                    ],
+                }
+            });
+
+
+            map.addLayer({
+                id: 'Boundary',
+                type: 'line',
+                source: 'Boundary',
+                paint: {
+                    'line-width': 2,
+                    'line-color': 'black',
+                }
+            });
+
+
+            map.addLayer({
+                id: 'water',
+                type: 'fill',
+                source: 'water'
+            });
+
+            // map.setLayoutProperty('Too-Little-Frontage', 'visibility', 'none');
+            //map.setLayoutProperty('Residential-Parcels-Smaller-than-Minimum-Lot-Size', 'visibility', 'none');
+            map.setLayoutProperty('Lot-Sizes-of-Residential-Parcels', 'visibility', 'none');
+            //map.setLayoutProperty('Zones', 'visibility', 'none');
+            map.setLayoutProperty('Overlay', 'visibility', 'none');
+            map.setLayoutProperty('Uses', 'visibility', 'none');
+
+            const checkboxes = document.querySelectorAll('.layer-toggle');
+
+const legends = {
+    'Too-Little-Frontage': 'frontageLegend',
+    'Residential-Parcels-Smaller-than-Minimum-Lot-Size': 'toosmallLegend',
+    'Lot-Sizes-of-Residential-Parcels': 'lotsizeLegend',
+    'Zones': 'existzoneLegend',
+    'Uses' : 'useLegend',
+    'Overlay': 'overlayLegend'
+};
+
+checkboxes.forEach((checkbox) => {
+    checkbox.addEventListener('change', () => {
+        const layerId = checkbox.value;
+        const visibility = checkbox.checked ? 'visible' : 'none';
+        if (map.getLayer(layerId)) {
+            map.setLayoutProperty(layerId, 'visibility', visibility);
+        }
+
+        // Instead of trying to show/hide predefined legends, let's dynamically rebuild
+        const legendContainer = document.getElementById('legend-container');
+        legendContainer.innerHTML = ''; // Clear all
+
+        Array.from(checkboxes).forEach(cb => {
+            if (cb.checked && legendEntries[cb.value]) {
+                const entries = legendEntries[cb.value];
+
+                const legendSection = document.createElement('div');
+                legendSection.className = 'legend';
+
+                const title = document.createElement('h4');
+                title.textContent = cb.value.replace(/-/g, ' ');
+                legendSection.appendChild(title);
+
+                entries.forEach(entry => {
+                    const item = document.createElement('div');
+                    item.innerHTML = `
+                        <span style="background:${entry.color};"></span>${entry.label}
+                    `;
+                    legendSection.appendChild(item);
+                });
+
+                legendContainer.appendChild(legendSection);
+            }
+        });
+
+                map.setLayoutProperty("road-label", 'visibility', 'visible');
+    });
+});
+
+function rebuildLegend() {
+    const legendContainer = document.getElementById('legend-container');
+    legendContainer.innerHTML = ''; // Clear all
+
+    Array.from(checkboxes).forEach(cb => {
+        if (cb.checked && legendEntries[cb.value]) {
+            const entries = legendEntries[cb.value];
+
+            const legendSection = document.createElement('div');
+            legendSection.className = 'legend';
+
+            const title = document.createElement('h4');
+            title.textContent = cb.value.replace(/-/g, ' ');
+            legendSection.appendChild(title);
+
+            entries.forEach(entry => {
+                const item = document.createElement('div');
+                item.innerHTML = `
+                    <span style="background:${entry.color};"></span>${entry.label}
+                `;
+                legendSection.appendChild(item);
+            });
+
+            legendContainer.appendChild(legendSection);
+        }
+    });
+}
+
+// 1. Rebuild legends when page loads
+rebuildLegend();
+
+// 2. Also rebuild legends when user checks/unchecks
+checkboxes.forEach((checkbox) => {
+    checkbox.addEventListener('change', () => {
+        const layerId = checkbox.value;
+        const visibility = checkbox.checked ? 'visible' : 'none';
+        if (map.getLayer(layerId)) {
+            map.setLayoutProperty(layerId, 'visibility', visibility);
+        }
+        rebuildLegend(); // Refresh the legend dynamically
+    });
+});
+
+        });
+
+
+    </script>
+
+</body>
+
+</html>
