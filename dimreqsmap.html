@@ -120,6 +120,7 @@
                 <label><input type="checkbox" class="layer-toggle" value="Residential-Parcels-Smaller-than-Minimum-Lot-Size" checked> Insufficient lot size</label>   
                 <label><input type="checkbox" class="layer-toggle" value="Overlay"> Overlays</label>        
                 <label><input type="checkbox" class="layer-toggle" value="Zones" checked> Existing zoning</label>
+                <label><input type="checkbox" class="layer-toggle" value="Uses"> Existing use</label>
     
             </div>
         </div>
@@ -142,28 +143,64 @@
             '#0D1667'
         ]
 
+        const uses = [
+  "Public/Ins",
+  "Single-fam",
+  "Vacant",
+  "Multi-fami",
+  "Industrial",
+  "Three-fami",
+  "Two-family",
+  "Other hous",
+  "Commercial",
+  "Mixed-use",
+  "Other",
+  "Hotel",
+  "Recreation",
+  "Nursing ho"
+]
+       
+const useColors = [
+  "#d4f088", // green
+  "#fffbd7", // light yellow
+  "#FFFFFF", // white
+  "#f89411", // orange
+  "#d5d5d5", // gray
+  "#ffd489", // warmest yellow
+  "#fff17f", // yellow
+  "#A52A2A", // brown
+  "#f2b1c2", // pink
+  "#d899dd", // fuchsia
+  "#000000", // black
+  "#ff6969", // peach
+  "#8adfa9", // green (again)
+  "#aa99ff"  // 
+];
+
+        const usesAndColors = uses.flatMap((use, i) => [use, useColors[i]]);
+
         const zones = ['BA', 'BB', 'BC', 'C', 'CR', 'HR1', 'HR2', 'I', 'LC', 'RA1', 'RA2', 'RA3', 'RA4', 'RB', 'RC', 'RD']
        
-        const zoneColors = [
-            "#ffb3b3", // BA
-            "#f26b6b", // BB
-            "#a82940", // BC
-            "#f7d8d8", // C
-            "#bdd66b", // CR
-            "#0057e7", // HR1
-            "#734ac3", // HR2
-            "#b3b3b3", // I
-            "#b7a4ff", // LC
-            "#fff9dc", // RA1
-            "#fff099", // RA2
-            "#f4dd63", // RA3
-            "#f5b72d", // RA4
-            "#f18c1b", // RB
-            "#c87a12", // RC
-            "#a55a00"  // RD
-        ];
+       const zoneColors = [
+           "#ffb3b3", // BA
+           "#f26b6b", // BB
+           "#a82940", // BC
+           "#f7d8d8", // C
+           "#bdd66b", // CR
+           "#0057e7", // HR1
+           "#734ac3", // HR2
+           "#b3b3b3", // I
+           "#b7a4ff", // LC
+           "#fff9dc", // RA1
+           "#fff099", // RA2
+           "#f4dd63", // RA3
+           "#f5b72d", // RA4
+           "#f18c1b", // RB
+           "#c87a12", // RC
+           "#a55a00"  // RD
+       ];
 
-        const zonesAndColors = zones.flatMap((zone, i) => [zone, zoneColors[i]]);
+       const zonesAndColors = zones.flatMap((zone, i) => [zone, zoneColors[i]]);
 
         mapboxgl.accessToken = 'pk.eyJ1Ijoic2FyYWJyZW50IiwiYSI6ImNtMHpsb2Q4NTAwemoybHExbnB6eHVvZ2kifQ.nH0hUSv3IGzX6MkYB_cSmA';
         const map = new mapboxgl.Map({
@@ -199,6 +236,23 @@ const legendEntries = {
         color: zoneColors[i],
         label: zone
     })),
+    'Uses': [
+    { color: useColors[1], label: 'Single-family' },
+    { color: useColors[6], label: 'Two-family' },
+    { color: useColors[5], label: 'Three-family' },
+    { color: useColors[3], label: 'Multi-family' },
+    { color: useColors[7], label: 'Other housing' },
+    { color: useColors[13], label: 'Nursing home' },
+    { color: useColors[11], label: 'Hotel' },
+    { color: useColors[8], label: 'Commercial (retail, office)' },
+        { color: useColors[9], label: 'Mixed-use' },
+        { color: useColors[12], label: 'Recreation' },
+    { color: useColors[4], label: 'Industrial' },
+        { color: useColors[0], label: 'Public/Institutional (including open space)' },
+        { color: useColors[2], label: 'Vacant' },
+        { color: useColors[10], label: 'Other use' },
+],
+
     'Overlay': [
         { color: 'black', label: 'ROD' },
         { color: '#0040fe', label: 'LCRAP' },
@@ -245,7 +299,17 @@ const legendEntries = {
             map.addSource('overlays', {
                 type: 'geojson',
                 data: 'overlays.geojson'
-            });            
+            });        
+            
+            map.addSource('water', {
+                type: 'geojson',
+                data: 'water2.geojson'
+            });     
+
+            map.addSource('uses', {
+                type: 'geojson',
+                data: 'existinguse.geojson'
+            });     
 
             map.addLayer({
                 id: 'Zones',
@@ -258,9 +322,19 @@ const legendEntries = {
             });
 
             map.addLayer({
+                id: 'Uses',
+                type: 'fill',
+                source: 'uses',
+                paint: {
+                    'fill-color': ['match', ['string', ['get', 'SimplLU']], ...usesAndColors, '#AAAAAA'],
+                    'fill-opacity': 1,
+                }
+            });
+
+            map.addLayer({
                 id: 'Lot-Sizes-of-Residential-Parcels',
                 type: 'fill',
-                source: 'resipar',
+                source: 'existing',
                 paint: {
                     'fill-outline-color': 'white',
                     'fill-color': [
@@ -296,7 +370,7 @@ const legendEntries = {
             map.addLayer({
                 id: 'Residential-Parcels-Smaller-than-Minimum-Lot-Size',
                 type: 'fill',
-                source: 'resipar',
+                source: 'existing',
                 paint: {
                     'fill-color': [
                         'match',
@@ -332,7 +406,7 @@ const legendEntries = {
                         'transparent' // default fallback color
                     ],
                 }
-            });
+            } );
 
             map.addLayer({
                 id: 'Overlay',
@@ -353,6 +427,7 @@ const legendEntries = {
                 }
             });
 
+
             map.addLayer({
                 id: 'Boundary',
                 type: 'line',
@@ -363,11 +438,19 @@ const legendEntries = {
                 }
             });
 
+
+            map.addLayer({
+                id: 'water',
+                type: 'fill',
+                source: 'water'
+            });
+
             // map.setLayoutProperty('Too-Little-Frontage', 'visibility', 'none');
             //map.setLayoutProperty('Residential-Parcels-Smaller-than-Minimum-Lot-Size', 'visibility', 'none');
             map.setLayoutProperty('Lot-Sizes-of-Residential-Parcels', 'visibility', 'none');
             //map.setLayoutProperty('Zones', 'visibility', 'none');
             map.setLayoutProperty('Overlay', 'visibility', 'none');
+            map.setLayoutProperty('Uses', 'visibility', 'none');
 
             const checkboxes = document.querySelectorAll('.layer-toggle');
 
@@ -376,6 +459,7 @@ const legends = {
     'Residential-Parcels-Smaller-than-Minimum-Lot-Size': 'toosmallLegend',
     'Lot-Sizes-of-Residential-Parcels': 'lotsizeLegend',
     'Zones': 'existzoneLegend',
+    'Uses' : 'useLegend',
     'Overlay': 'overlayLegend'
 };
 
@@ -413,6 +497,8 @@ checkboxes.forEach((checkbox) => {
                 legendContainer.appendChild(legendSection);
             }
         });
+
+                map.setLayoutProperty("road-label", 'visibility', 'visible');
     });
 });
 
