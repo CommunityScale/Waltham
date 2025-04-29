@@ -279,11 +279,6 @@ const legendEntries = {
                 data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/frontages.geojson'
             });
 
-            //map.addSource('resipar', {
-            //    type: 'geojson',
-            //    data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/allparcels.geojson'
-            //});
-
             map.addSource('Boundary', {
                 type: 'geojson',
                 data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/walthamoutline.geojson'
@@ -316,19 +311,14 @@ const legendEntries = {
                 source: 'uses',
                 paint: {
                     'fill-color': ['match', ['string', ['get', 'SimplLU']], ...usesAndColors, '#AAAAAA'],
-                    'fill-opacity': 1,
+                    'fill-opacity': [
+                    "case",
+                    ["boolean", ["feature-state", "hover"], false],
+                    0.5,
+                    1],
                 }
             });
 
-            map.addLayer({
-                id: 'Uses',
-                type: 'fill',
-                source: 'uses',
-                paint: {
-                    'fill-color': ['match', ['string', ['get', 'SimplLU']], ...usesAndColors, '#AAAAAA'],
-                    'fill-opacity': 1,
-                }
-            });
 
             map.addLayer({
                 id: 'Zones',
