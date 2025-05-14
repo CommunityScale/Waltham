@@ -8,25 +8,22 @@
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
     <style>
-        html {
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-        }
-        
-        body {
+        html, body {
             margin: 0;
             padding: 0;
             height: 100%;
             width: 100%;
+        }
+
+        body {
             display: flex;
             flex-direction: column;
         }
 
         #map {
-            width: 100%;
             flex-grow: 1;
             min-height: 0;
+            width: 100%;
         }
 
        .mapboxgl-popup {
