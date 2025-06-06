@@ -16,10 +16,15 @@
             width: 100%;
         }
 
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
         #map {
+            flex-grow: 1;
+            min-height: 0;
             width: 100%;
-            flex-shrink: 1;
-            height: 100%;
         }
 
         .mapboxgl-popup {
@@ -511,6 +516,10 @@
                 source: 'water'
             });
 
+window.addEventListener('resize', () => {
+        map.resize();
+        });
+            
             // map.setLayoutProperty('Too-Little-Frontage', 'visibility', 'none');
             //map.setLayoutProperty('Residential-Parcels-Smaller-than-Minimum-Lot-Size', 'visibility', 'none');
             map.setLayoutProperty('Lot-Sizes-of-Residential-Parcels', 'visibility', 'none');
