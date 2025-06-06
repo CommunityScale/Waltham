@@ -476,7 +476,12 @@
                 type: 'fill',
                 source: 'coverfront',
                 paint: {
-                    'fill-color': 'red'
+                    'fill-color': [
+                        'match',
+                        ['get', 'WalthamBuildingsv2_TooLilSB'],
+                        "1", 'rgba(0, 0, 0, .25)',
+                        'rgba(0, 0, 0, 0)' // default fallback color
+                    ]
                 }
             });
 
@@ -520,8 +525,8 @@ window.addEventListener('resize', () => {
         map.resize();
         });
             
-            // map.setLayoutProperty('Too-Little-Frontage', 'visibility', 'none');
-            //map.setLayoutProperty('Residential-Parcels-Smaller-than-Minimum-Lot-Size', 'visibility', 'none');
+            map.setLayoutProperty('Too-Little-Frontage', 'visibility', 'none');
+            map.setLayoutProperty('Residential-Parcels-Smaller-than-Minimum-Lot-Size', 'visibility', 'none');
             map.setLayoutProperty('Lot-Sizes-of-Residential-Parcels', 'visibility', 'none');
             map.setLayoutProperty('Too-Much-Coverage', 'visibility', 'none');
             map.setLayoutProperty('Too-Little-Setback', 'visibility', 'none');
