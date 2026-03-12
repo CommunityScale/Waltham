@@ -7,28 +7,31 @@
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
     <link href="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v2.11.0/mapbox-gl.js"></script>
+    <script src="parcel_data.js"></script>
     <style>
-        html,
-        body {
+        html, body {
             margin: 0;
             padding: 0;
             height: 100%;
             width: 100%;
+            overflow: hidden;
         }
 
         body {
-            display: flex;
-            flex-direction: column;
+            position: relative;
         }
 
         #map {
-            flex-grow: 1;
-            min-height: 0;
-            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            transition: right 0.3s ease;
         }
 
         .mapboxgl-popup {
-            width: 175px;
+            width: 220px;
             font: 12px/20px 'Roboto', sans-serif;
             background-color: #425A70;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
@@ -38,9 +41,7 @@
             margin: 0;
         }
 
-        .mapboxgl-popup .mapboxgl-popup-tip {
-            display: none;
-        }
+        .mapboxgl-popup .mapboxgl-popup-tip { display: none; }
 
         .mapboxgl-popup-close-button {
             top: 2px;
@@ -51,7 +52,7 @@
         }
 
         .mapboxgl-popup-header {
-            margin: 0px;
+            margin: 0;
             font-size: 14px;
             color: #fff;
             font-weight: bold;
@@ -61,59 +62,118 @@
         .mapboxgl-popup-content {
             font-size: 12px;
             color: black;
-            margin-left: 0px;
+            margin-left: 0;
             padding: 8px;
             background-color: #fff;
             line-height: 1.25;
         }
-    </style>
-</head>
 
-<body>
-
-    <style>
         #layer-controls {
             position: absolute;
             top: 10px;
             left: 10px;
             background: white;
-            padding: 10px;
+            padding: 0;
             font: 14px Arial;
             z-index: 2;
             border-radius: 4px;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
         }
 
+        #layer-controls-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 10px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            user-select: none;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        #layer-controls-header .toggle-icon {
+            font-size: 11px;
+            color: #666;
+            transition: transform 0.2s;
+        }
+
+        #layer-controls-body {
+            padding: 6px 10px 10px;
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+            overflow: hidden;
+        }
+
+        #layer-controls-body.collapsed {
+            max-height: 0;
+            opacity: 0;
+            padding: 0 10px;
+        }
+
+        .layer-group {
+            margin-bottom: 6px;
+        }
+
+        .layer-group-label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 6px 0 2px;
+        }
+
+        .layer-group label {
+            display: block;
+            padding: 1px 0;
+            font-size: 13px;
+        }
+
         #legend-container {
             position: absolute;
-            top: 10px;
-            right: 10px;
-            width: 250px;
-            /* adjust if you want wider */
+            bottom: 10px;
+            left: 10px;
+            width: 220px;
             background: white;
             border-radius: 6px;
             box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
             padding: 10px;
             overflow-y: auto;
-            /* scroll if too many */
-            max-height: 80vh;
-            /* don't overflow screen */
+            max-height: 40vh;
             z-index: 3;
             font-family: 'Helvetica Neue', Arial, sans-serif;
-            font-size: 12px;
+            font-size: 11px;
         }
 
-        .legend {
-            position: static;
-            /* <-- change this from absolute to static */
-            margin-bottom: 10px;
-            /* add some breathing room between legends */
+        #legend-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            user-select: none;
+            margin-bottom: 8px;
         }
 
-        .legend h4 {
-            margin: 0 0 10px;
+        #legend-header .toggle-icon {
+            font-size: 11px;
+            color: #666;
+            transition: transform 0.2s;
         }
 
+        #legend-body {
+            transition: max-height 0.3s ease, opacity 0.2s ease;
+            overflow: hidden;
+        }
+
+        #legend-body.collapsed {
+            max-height: 0;
+            opacity: 0;
+        }
+
+        .legend { position: static; margin-bottom: 10px; }
+        .legend h4 { margin: 0 0 6px; font-size: 12px; }
         .legend div span {
             border-radius: 50%;
             display: inline-block;
@@ -121,63 +181,2013 @@
             margin-right: 5px;
             width: 10px;
         }
-    </style>
-    <div id="container">
-        <div id="layer-controls">
-            <label><input type="checkbox" class="layer-toggle" value="Parcels" checked> Parcels</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="Proposed-Zones" checked> Proposed
-                zoning</label><br>
 
-            <label><input type="checkbox" class="layer-toggle" value="Lot-Sizes-of-Residential-Parcels"> Lot
-                size</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="Too-Little-Frontage"> Insufficient
-                frontage</label><br>
-            <label><input type="checkbox" class="layer-toggle"
-                    value="Residential-Parcels-Smaller-than-Minimum-Lot-Size"> Insufficient lot size</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="Overlay"> Overlays</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="Too-Little-Setback"> Insufficient front
-                setback</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="Too-Much-Coverage"> Building coverage greater than
-                maximum allowed</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="Zones"> Existing zoning</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="Uses"> Existing use</label>
+        /* ========== Analysis Toggle (right side card) ========== */
+        #analysis-toggle {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 2;
+            background: white;
+            border: none;
+            padding: 0;
+            border-radius: 4px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+            cursor: pointer;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            text-align: left;
+            width: 220px;
+        }
+
+        #analysis-toggle:hover { background: #f5f7f9; }
+
+        #analysis-toggle .toggle-header {
+            font-weight: bold;
+            font-size: 13px;
+            padding: 8px 10px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        #analysis-toggle .toggle-header .toggle-arrow {
+            font-size: 11px;
+            color: #666;
+        }
+
+        #analysis-toggle .toggle-desc {
+            font-size: 11px;
+            color: #666;
+            padding: 6px 10px 8px;
+            line-height: 1.4;
+        }
+
+        #analysis-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 460px;
+            background: white;
+            z-index: 5;
+            box-shadow: -3px 0 10px rgba(0,0,0,0.2);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            font-size: 12px;
+        }
+
+        #analysis-panel.open {
+            transform: translateX(0);
+        }
+
+        body.panel-open #map {
+            right: 460px;
+        }
+
+        .panel-header {
+            background: #425A70;
+            color: white;
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            height: 44px;
+        }
+
+        .panel-tabs {
+            display: flex;
+            height: 100%;
+        }
+
+        .panel-tab {
+            background: none;
+            border: none;
+            color: rgba(255,255,255,0.5);
+            padding: 0 20px;
+            font: bold 13px 'Helvetica Neue', Arial, sans-serif;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .panel-tab:hover { color: rgba(255,255,255,0.85); }
+        .panel-tab.active { color: white; border-bottom-color: white; }
+
+        .panel-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 22px;
+            cursor: pointer;
+            padding: 0 4px;
+        }
+
+        .panel-view {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 14px;
+            display: none;
+        }
+
+        .panel-view.active { display: block; }
+
+        .panel-view h3 {
+            margin: 0 0 10px;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .view-actions {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid #e0e0e0;
+            text-align: right;
+        }
+
+        /* Comparison side-by-side */
+        .comparison-layout {
+            display: flex;
+            gap: 40px;
+        }
+
+        .comparison-col {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .comparison-col h3 {
+            margin: 0 0 8px;
+            font-size: 14px;
+        }
+
+        /* Tables */
+        #analysis-panel table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 10px;
+            table-layout: fixed;
+        }
+
+        #analysis-panel tr:hover td {
+            background: #f0f4f8;
+        }
+
+        #analysis-panel th {
+            background: #f5f5f5;
+            padding: 3px 4px;
+            text-align: right;
+            border-bottom: 2px solid #ddd;
+            white-space: nowrap;
+            font-weight: 600;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #analysis-panel th:first-child { text-align: left; }
+
+        #analysis-panel td {
+            padding: 2px 4px;
+            text-align: right;
+            border-bottom: 1px solid #eee;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #analysis-panel td:first-child { text-align: left; font-weight: 600; }
+
+        #analysis-panel tr.total-row {
+            font-weight: bold;
+            border-top: 2px solid #333;
+        }
+
+        #analysis-panel tr.total-row td {
+            border-bottom: none;
+            padding-top: 6px;
+        }
+
+        #analysis-panel input[type="number"] {
+            width: 55px;
+            padding: 2px 4px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+            font-size: 11px;
+            text-align: right;
+        }
+
+        #analysis-panel input[type="number"]:focus {
+            outline: none;
+            border-color: #425A70;
+            box-shadow: 0 0 0 1px #425A70;
+        }
+
+        #analysis-panel input[type="number"].changed {
+            background: #fff3cd;
+            border-color: #ffc107;
+        }
+
+        .nc-high { color: #dc3545; font-weight: bold; }
+        .nc-med { color: #fd7e14; }
+        .nc-low { color: #28a745; }
+
+        .diff-improved { background: #d4edda; }
+        .diff-worsened { background: #f8d7da; }
+
+        .reset-field-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 0 2px;
+            color: #666;
+            vertical-align: middle;
+        }
+        .reset-field-btn:hover { color: #dc3545; }
+
+        #analysis-panel th.sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+        #analysis-panel th.sortable:hover {
+            background: #e8e8e8;
+        }
+        #analysis-panel th .sort-arrow {
+            font-size: 9px;
+            margin-left: 2px;
+        }
+
+        /* ========== Phase 1: Stepper Navigation ========== */
+        .panel-stepper {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            gap: 0;
+        }
+
+        .step-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 16px;
+            height: 100%;
+            cursor: pointer;
+            color: rgba(255,255,255,0.4);
+            font: bold 13px 'Helvetica Neue', Arial, sans-serif;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+            user-select: none;
+            position: relative;
+        }
+
+        .step-item:hover:not(.disabled) { color: rgba(255,255,255,0.85); }
+        .step-item.active { color: white; border-bottom-color: white; }
+        .step-item.completed { color: rgba(255,255,255,0.75); }
+        .step-item.disabled { cursor: not-allowed; opacity: 0.4; }
+
+        .step-circle {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid rgba(255,255,255,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .step-item.active .step-circle {
+            border-color: white;
+            background: white;
+            color: #425A70;
+        }
+
+        .step-item.completed .step-circle {
+            border-color: rgba(255,255,255,0.7);
+            background: rgba(255,255,255,0.2);
+        }
+
+        .step-connector {
+            width: 24px;
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+            flex-shrink: 0;
+        }
+
+        .step-badge {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            background: #28a745;
+            color: white;
+            font-size: 9px;
+            font-weight: bold;
+            padding: 1px 5px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .step-badge.visible { display: inline-block; }
+
+        .intro-text {
+            color: #666;
+            font-size: 13px;
+            line-height: 1.5;
+            margin: 0 0 16px;
+            padding: 12px 16px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border-left: 3px solid #425A70;
+        }
+
+        /* ========== Phase 2: Visual Summary ========== */
+        .bar-cell {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 0;
+            border-radius: 2px;
+        }
+
+        .bar-cell .bar-text {
+            position: relative;
+            z-index: 1;
+        }
+
+        .count-detail {
+            color: #999;
+            font-size: 9px;
+            display: none;
+        }
+
+        .worst-row {
+            border-left: 3px solid #dc3545 !important;
+        }
+
+        .worst-row td:first-child {
+            padding-left: 3px;
+        }
+
+        .heatmap-strip {
+            display: flex;
+            gap: 3px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .heatmap-block {
+            width: 36px;
+            height: 20px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 9px;
+            font-weight: bold;
+            color: #333;
+            cursor: default;
+            position: relative;
+        }
+
+        .heatmap-block[title]:hover::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 10px;
+            white-space: nowrap;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* ========== Phase 3: Editing UX ========== */
+        .zone-group-header {
+            background: #e8edf2;
+            padding: 6px 8px;
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #425A70;
+            border-top: 2px solid #ccc;
+        }
+
+        .zone-group-header td {
+            background: #e8edf2 !important;
+            text-align: left !important;
+            font-weight: bold !important;
+            color: #425A70 !important;
+        }
+
+        .zone-nc-indicator {
+            display: inline-block;
+            font-size: 9px;
+            font-weight: normal;
+            padding: 1px 5px;
+            border-radius: 8px;
+            margin-left: 4px;
+            color: white;
+        }
+
+        .live-delta {
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 4px;
+            display: inline-block;
+        }
+
+        .live-delta.improved { color: #28a745; }
+        .live-delta.worsened { color: #dc3545; }
+
+        .preset-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .preset-btn {
+            background: #f0f4f8;
+            border: 1px solid #ccd5de;
+            padding: 5px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            color: #425A70;
+            font-weight: 600;
+            transition: all 0.15s;
+        }
+
+        .preset-btn:hover {
+            background: #425A70;
+            color: white;
+            border-color: #425A70;
+        }
+
+        /* ========== Phase 4: Unified Comparison ========== */
+        .comparison-summary-bar {
+            background: linear-gradient(135deg, #425A70, #2e4050);
+            color: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .comparison-summary-bar .big-number {
+            font-size: 28px;
+            font-weight: bold;
+            margin: 4px 0;
+        }
+
+        .comparison-summary-bar .subtitle {
+            font-size: 13px;
+            opacity: 0.85;
+        }
+
+        .delta-cell {
+            font-weight: bold;
+        }
+
+        .delta-positive { color: #dc3545; }
+        .delta-negative { color: #28a745; }
+
+        .comparison-chart {
+            margin-top: 16px;
+        }
+
+        .chart-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 11px;
+        }
+
+        .chart-label {
+            width: 36px;
+            font-weight: 600;
+            flex-shrink: 0;
+            font-size: 11px;
+        }
+
+        .chart-bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .chart-bar-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .chart-bar {
+            height: 16px;
+            border-radius: 3px;
+            min-width: 2px;
+        }
+
+        .chart-bar.current { background: #ccd3da; }
+        .chart-bar.proposed { background: #425A70; }
+
+        .chart-bar-label {
+            font-size: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+            min-width: 30px;
+        }
+
+        .chart-bar-label.current { color: #888; }
+        .chart-bar-label.proposed { color: #425A70; }
+
+        .chart-delta-label {
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        .chart-delta-label.improved { color: #28a745; }
+        .chart-delta-label.worsened { color: #dc3545; }
+
+        .chart-legend-inline {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 10px;
+            font-size: 11px;
+            color: #666;
+        }
+
+        .chart-legend-inline span::before {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        .chart-legend-inline .leg-current::before { background: #ccd3da; }
+        .chart-legend-inline .leg-proposed::before { background: #425A70; }
+
+        /* ========== Phase 5: Map-Panel Integration ========== */
+        .zone-row-hover td {
+            background: #dde8f0 !important;
+        }
+
+        /* ========== Phase 6: Accordion & Lasso ========== */
+        .reassign-accordion {
+            margin-top: 16px;
+            border: 1px solid #dde4ec;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        .reassign-accordion-header {
+            background: #f0f4f8;
+            padding: 10px 14px;
+            font-weight: 600;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none;
+        }
+
+        .reassign-accordion-header:hover { background: #e4eaf0; }
+
+        .reassign-accordion-body {
+            padding: 12px 14px;
+            display: none;
+        }
+
+        .reassign-accordion-body.open { display: block; }
+
+        .reassign-method {
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+            padding: 8px 0;
+        }
+
+        .reassign-method.primary-method {
+            background: #f0f7ff;
+            border: 1px solid #c4daf0;
+            border-radius: 6px;
+            padding: 10px 12px;
+        }
+
+        .method-icon {
+            font-size: 22px;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .method-title {
+            font-weight: 600;
+            font-size: 12px;
+            color: #333;
+        }
+
+        .method-desc {
+            font-size: 11px;
+            color: #666;
+            line-height: 1.4;
+            margin-top: 2px;
+        }
+
+        .reassign-divider {
+            display: flex;
+            align-items: center;
+            margin: 4px 0;
+            color: #aaa;
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .reassign-divider::before,
+        .reassign-divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #ddd;
+        }
+
+        .reassign-divider span {
+            padding: 0 8px;
+        }
+
+        .lasso-btn {
+            background: #f0f4f8;
+            border: 1px solid #ccd5de;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            color: #425A70;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+
+        .lasso-btn:hover { background: #dde4ec; }
+        .lasso-btn.active { background: #425A70; color: white; border-color: #425A70; }
+
+        #loading-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.7);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        #loading-overlay.hidden { display: none; }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e0e0e0;
+            border-top-color: #425A70;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .btn-primary {
+            background: #425A70;
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font: bold 13px 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        .btn-primary:hover { background: #2e4050; }
+
+        .btn-secondary {
+            background: white;
+            color: #425A70;
+            border: 2px solid #425A70;
+            padding: 6px 18px;
+            border-radius: 4px;
+            cursor: pointer;
+            font: bold 13px 'Helvetica Neue', Arial, sans-serif;
+            margin-right: 8px;
+        }
+
+        .btn-secondary:hover { background: #f0f4f8; }
+
+        .reassignment-status {
+            padding: 6px 24px;
+            background: #f0f7ff;
+            font-size: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            border-bottom: 1px solid #dde4ec;
+        }
+
+        .reassignment-status button {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 3px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 11px;
+        }
+
+        .reassignment-status button:hover { background: #c82333; }
+
+        .help-text {
+            color: #666;
+            font-size: 12px;
+            margin: 4px 0 0;
+        }
+
+        .popup-zone-select {
+            margin-top: 6px;
+            padding: 3px;
+            width: 100%;
+            font-size: 11px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+        .popup-reassigned {
+            color: #dc3545;
+            font-weight: bold;
+            font-size: 10px;
+        }
+        /* ========== Phase 7: Mobile/Responsive ========== */
+        @media (max-width: 768px) {
+            #layer-controls {
+                max-width: 180px;
+                font-size: 12px;
+            }
+            #legend-container {
+                width: 160px;
+                font-size: 10px;
+            }
+            #analysis-toggle {
+                width: 170px;
+            }
+            #analysis-toggle .toggle-desc {
+                font-size: 10px;
+            }
+            #analysis-panel {
+                width: 100%;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+            }
+            body.panel-open #map {
+                right: 0;
+            }
+            .step-item .step-label { display: none; }
+            .step-connector { width: 12px; }
+            .step-item { padding: 0 10px; }
+            .preset-bar { flex-wrap: wrap; }
+            .heatmap-strip { overflow-x: auto; flex-wrap: nowrap; }
+            .panel-view {
+                padding: 10px 12px;
+            }
+            .swipe-container {
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                gap: 12px;
+                padding-bottom: 8px;
+            }
+            .swipe-card {
+                flex: 0 0 85%;
+                scroll-snap-align: start;
+                background: #f8f9fa;
+                border-radius: 8px;
+                padding: 16px;
+                border: 1px solid #dde4ec;
+            }
+            .reassign-accordion { margin-top: 8px; }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="layer-controls">
+        <div id="layer-controls-header">
+            <span>Layers</span>
+            <span class="toggle-icon">&#9660;</span>
+        </div>
+        <div id="layer-controls-body">
+            <div class="layer-group">
+                <div class="layer-group-label">Base</div>
+                <label><input type="checkbox" class="layer-toggle" value="Parcels" checked> Parcels</label>
+                <label><input type="checkbox" class="layer-toggle" value="Proposed-Zones" checked> Proposed zoning</label>
+                <label><input type="checkbox" class="layer-toggle" value="Zones"> Existing zoning</label>
+                <label><input type="checkbox" class="layer-toggle" value="Uses"> Existing use</label>
+                <label><input type="checkbox" class="layer-toggle" value="Overlay"> Overlays</label>
+            </div>
+            <div class="layer-group">
+                <div class="layer-group-label">Nonconformity</div>
+                <label><input type="checkbox" class="layer-toggle" value="Lot-Sizes-of-Residential-Parcels"> Lot size</label>
+                <label><input type="checkbox" class="layer-toggle" value="Too-Little-Frontage"> Insufficient frontage</label>
+                <label><input type="checkbox" class="layer-toggle" value="Residential-Parcels-Smaller-than-Minimum-Lot-Size"> Undersized lots</label>
+                <label><input type="checkbox" class="layer-toggle" value="Too-Little-Setback"> Insufficient setback</label>
+                <label><input type="checkbox" class="layer-toggle" value="Too-Much-Coverage"> Excess building coverage</label>
+            </div>
         </div>
     </div>
+
     <div id="map"></div>
-    <div id="legend-container"></div>
+    <div id="loading-overlay"><div class="spinner"></div></div>
 
+    <div id="legend-container">
+        <div id="legend-header">
+            <span>Legend</span>
+            <span class="toggle-icon">&#9660;</span>
+        </div>
+        <div id="legend-body"></div>
+    </div>
 
+    <button id="analysis-toggle" onclick="openPanel()">
+        <div class="toggle-header">
+            <span>Nonconformity Analysis</span>
+            <span class="toggle-arrow">&#9654;</span>
+        </div>
+        <div class="toggle-desc">Review current nonconformity rates, propose zoning changes, and compare results.</div>
+    </button>
+
+    <div id="analysis-panel">
+        <div class="panel-header">
+            <div class="panel-stepper">
+                <div class="step-item active" data-view="summary" onclick="stepperClick('summary')">
+                    <span class="step-circle">1</span>
+                    <span class="step-label">Review</span>
+                </div>
+                <span class="step-connector"></span>
+                <div class="step-item" data-view="editing" onclick="stepperClick('editing')">
+                    <span class="step-circle">2</span>
+                    <span class="step-label">Edit</span>
+                </div>
+                <span class="step-connector"></span>
+                <div class="step-item" data-view="comparison" onclick="stepperClick('comparison')">
+                    <span class="step-circle">3</span>
+                    <span class="step-label">Compare</span>
+                    <span class="step-badge" id="step-badge-compare"></span>
+                </div>
+            </div>
+            <button class="panel-close" onclick="closePanel()">&times;</button>
+        </div>
+
+        <div class="reassignment-status" id="reassignment-status" style="display:none;">
+            <span id="reassignment-count">0 parcels reassigned</span>
+            <span>
+                <button onclick="downloadReassignments()" style="background:#425A70;margin-right:4px;">Download CSV</button>
+                <button onclick="resetReassignments()">Reset All</button>
+            </span>
+        </div>
+
+        <!-- Current Summary view -->
+        <div class="panel-view active" id="view-summary" role="tabpanel" aria-labelledby="tab-summary">
+            <p class="intro-text">This panel shows how many parcels in each zone don't meet current dimensional requirements. Review the summary below, then propose changes to see how they would affect nonconformity rates.</p>
+            <h3>Current Summary: % of Parcels Nonconforming by Dimensional Requirement</h3>
+            <div id="summary-table-container"></div>
+            <div class="view-actions">
+                <button class="btn-primary" onclick="switchView('editing')" style="padding:12px 32px;font-size:15px;">Propose Changes &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Propose Changes view -->
+        <div class="panel-view" id="view-editing" role="tabpanel" aria-labelledby="tab-editing">
+            <h3>Proposed Dimensional Requirements</h3>
+            <p class="help-text">Edit values below. Empty = no requirement. Yellow highlight = changed from current.</p>
+            <div class="preset-bar">
+                <button class="preset-btn" onclick="applyPreset('reset')">Reset all</button>
+            </div>
+            <div id="requirements-container"></div>
+
+            <div class="reassign-accordion">
+                <div class="reassign-accordion-header" onclick="toggleReassignAccordion()">
+                    <span>Zone Reassignment</span>
+                    <span class="toggle-icon" id="reassign-toggle-icon">&#9654;</span>
+                </div>
+                <div class="reassign-accordion-body" id="reassign-accordion-body">
+                    <div class="reassign-method primary-method">
+                        <div class="method-icon">&#128433;</div>
+                        <div>
+                            <div class="method-title">Click parcels on the map</div>
+                            <div class="method-desc">Click any parcel to open a popup where you can reassign its zone from a dropdown.</div>
+                        </div>
+                    </div>
+                    <div class="reassign-divider"><span>or</span></div>
+                    <div class="reassign-method">
+                        <div>
+                            <div class="method-title" style="margin-bottom:6px;">Bulk selection</div>
+                            <div style="display:flex;align-items:center;gap:6px;">
+                                <button class="lasso-btn" id="lasso-btn" onclick="startLasso()">Draw Selection</button>
+                                <button class="lasso-btn" id="lasso-cancel-btn" onclick="cancelLasso()" style="display:none;">Cancel</button>
+                                <select id="lasso-zone-select" style="display:none;padding:4px;font-size:11px;border-radius:3px;border:1px solid #ccc;">
+                                    <option value="">Assign zone...</option>
+                                </select>
+                            </div>
+                            <div class="method-desc" style="margin-top:4px;">Draw a polygon on the map to select multiple parcels at once.</div>
+                        </div>
+                    </div>
+                    <div id="lasso-status" style="font-size:11px;color:#666;margin-top:6px;"></div>
+                </div>
+            </div>
+
+            <div class="view-actions">
+                <button class="btn-primary" onclick="switchView('comparison')" style="padding:12px 24px;font-size:15px;">Compare Results &rarr;</button>
+            </div>
+        </div>
+
+        <!-- Comparison view -->
+        <div class="panel-view" id="view-comparison" role="tabpanel" aria-labelledby="tab-comparison">
+            <div id="comparison-summary-bar"></div>
+            <div id="comparison-unified-container"></div>
+            <div id="comparison-chart-container"></div>
+            <div class="view-actions" style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <button class="btn-secondary" onclick="switchView('editing')">&larr; Edit Proposals</button>
+                    <button class="btn-secondary" onclick="switchView('summary')">&larr; Current Summary</button>
+                </div>
+                <button class="btn-primary" onclick="downloadProposedChanges()">Download Summary (CSV)</button>
+            </div>
+        </div>
+    </div>
 
     <script>
-        const lotSizePalette = [ //blue ramp
-            '#E2FDFF',
-            '#D1EAFF',
-            '#BFD7FF',
-            '#9BB1FF',
-            '#8A9EFF',
-            '#788BFF',
-            '#5465FF',
-            '#333FAC',
-            '#1C2790',
-            '#0D1667'
-        ]
+        // ========== Zone requirements (current) ==========
+        const ZONE_REQUIREMENTS = {
+            BA:  { minLot: 6000,   minFrontage: 50,  maxCoverage: 0.30 },
+            BB:  { minLot: 6000,   minFrontage: 50,  maxCoverage: 0.20 },
+            BC:  { minLot: null,   minFrontage: 40,  maxCoverage: 0.90 },
+            C:   { minLot: 10000,  minFrontage: 50,  maxCoverage: null },
+            CR:  { minLot: null,   minFrontage: null, maxCoverage: null },
+            HR1: { minLot: 10000,  minFrontage: null, maxCoverage: 0.75 },
+            HR2: { minLot: 10000,  minFrontage: null, maxCoverage: 0.75 },
+            I:   { minLot: null,   minFrontage: 50,  maxCoverage: null },
+            LC:  { minLot: 217800, minFrontage: 400, maxCoverage: 0.30 },
+            RA1: { minLot: 20000,  minFrontage: 100, maxCoverage: 0.20 },
+            RA2: { minLot: 15000,  minFrontage: 80,  maxCoverage: 0.20 },
+            RA3: { minLot: 9600,   minFrontage: 70,  maxCoverage: 0.25 },
+            RA4: { minLot: 7000,   minFrontage: 60,  maxCoverage: 0.25 },
+            RB:  { minLot: 6000,   minFrontage: 60,  maxCoverage: 0.30 },
+            RC:  { minLot: 6000,   minFrontage: 50,  maxCoverage: 0.30 },
+            RD:  { minLot: 217800, minFrontage: 50,  maxCoverage: 0.30 }
+        };
+
+        // Deep copy for proposed (user-editable)
+        const PROPOSED_REQUIREMENTS = JSON.parse(JSON.stringify(ZONE_REQUIREMENTS));
+
+        // Zone overrides: LOC_ID -> new zone
+        const zoneOverrides = new Map();
+
+        // Build lookup for parcel data
+        const parcelByLocId = new Map();
+        if (typeof PARCEL_DATA !== 'undefined') {
+            PARCEL_DATA.forEach(p => parcelByLocId.set(p.l, p));
+        }
+
+        // ========== Layer controls collapse ==========
+        document.getElementById('layer-controls-header').addEventListener('click', () => {
+            const body = document.getElementById('layer-controls-body');
+            const icon = document.querySelector('#layer-controls-header .toggle-icon');
+            body.classList.toggle('collapsed');
+            icon.innerHTML = body.classList.contains('collapsed') ? '&#9654;' : '&#9660;';
+        });
+
+        // ========== Legend title map ==========
+        const legendTitleMap = {
+            'Lot-Sizes-of-Residential-Parcels': 'Lot size',
+            'Too-Little-Frontage': 'Insufficient frontage',
+            'Residential-Parcels-Smaller-than-Minimum-Lot-Size': 'Undersized lots',
+            'Too-Little-Setback': 'Insufficient setback',
+            'Too-Much-Coverage': 'Excess building coverage',
+            'Overlay': 'Overlays',
+            'Uses': 'Existing use',
+            'Parcels': 'Parcels'
+        };
+
+        // ========== Panel state ==========
+        let panelView = 'closed';
+        let debounceTimer = null;
+
+        function isMobile() {
+            return window.innerWidth <= 768;
+        }
+
+        function openPanel() {
+            document.getElementById('analysis-panel').classList.add('open');
+            document.body.classList.add('panel-open');
+            document.getElementById('analysis-toggle').style.display = 'none';
+            if (isMobile()) document.body.style.overflow = 'hidden';
+            switchView('summary');
+            setTimeout(() => map.resize(), 320);
+        }
+
+        function closePanel() {
+            const panel = document.getElementById('analysis-panel');
+            panel.classList.remove('open');
+            document.body.classList.remove('panel-open');
+            document.getElementById('analysis-toggle').style.display = '';
+            document.body.style.overflow = '';
+            panelView = 'closed';
+            clearZoneHighlight();
+            setTimeout(() => map.resize(), 320);
+        }
+
+        function hasUserChanges() {
+            for (const zone of Object.keys(ZONE_REQUIREMENTS)) {
+                const cur = ZONE_REQUIREMENTS[zone];
+                const prop = PROPOSED_REQUIREMENTS[zone];
+                if (cur.minLot !== prop.minLot) return true;
+                if (cur.minFrontage !== prop.minFrontage) return true;
+                if (cur.maxCoverage !== prop.maxCoverage) return true;
+            }
+            return zoneOverrides.size > 0;
+        }
+
+        function countChanges() {
+            let count = 0;
+            for (const zone of Object.keys(ZONE_REQUIREMENTS)) {
+                const cur = ZONE_REQUIREMENTS[zone];
+                const prop = PROPOSED_REQUIREMENTS[zone];
+                if (cur.minLot !== prop.minLot) count++;
+                if (cur.minFrontage !== prop.minFrontage) count++;
+                if (cur.maxCoverage !== prop.maxCoverage) count++;
+            }
+            count += zoneOverrides.size;
+            return count;
+        }
+
+        function updateStepperState() {
+            const steps = document.querySelectorAll('.step-item');
+            const badge = document.getElementById('step-badge-compare');
+            const changes = hasUserChanges();
+
+            if (changes) {
+                const c = countChanges();
+                badge.textContent = c;
+                badge.classList.add('visible');
+            } else {
+                badge.classList.remove('visible');
+            }
+
+            // Mark completed steps
+            const viewOrder = ['summary', 'editing', 'comparison'];
+            const currentIdx = viewOrder.indexOf(panelView);
+            steps.forEach((step, i) => {
+                step.classList.toggle('completed', i < currentIdx && !step.classList.contains('active'));
+            });
+        }
+
+        function stepperClick(view) {
+            switchView(view);
+        }
+
+        function switchView(view) {
+            panelView = view;
+
+            document.querySelectorAll('.panel-view').forEach(el => el.classList.remove('active'));
+            document.getElementById('view-' + view).classList.add('active');
+
+            // Update stepper
+            document.querySelectorAll('.step-item').forEach(step => {
+                step.classList.toggle('active', step.dataset.view === view);
+            });
+
+            updateStepperState();
+
+            if (view === 'summary') {
+                const results = computeNonconformity(ZONE_REQUIREMENTS, 'existing');
+                renderSummaryTable('summary-table-container', results);
+            } else if (view === 'editing') {
+                renderRequirementsTable();
+            } else if (view === 'comparison') {
+                renderComparison();
+            }
+        }
+
+        function renderComparison() {
+            const currentResults = computeNonconformity(ZONE_REQUIREMENTS, 'existing');
+            const proposedResults = computeNonconformity(PROPOSED_REQUIREMENTS, 'proposed');
+
+            renderSummaryBanner(currentResults, proposedResults);
+
+            if (isMobile()) {
+                renderMobileComparison(currentResults, proposedResults);
+            } else {
+                renderUnifiedComparison(currentResults, proposedResults);
+            }
+
+            renderComparisonChart(currentResults, proposedResults);
+        }
+
+        function renderSummaryBanner(currentResults, proposedResults) {
+            const container = document.getElementById('comparison-summary-bar');
+            let curTotal = 0, curNC = 0, propTotal = 0, propNC = 0;
+            for (const z of Object.keys(ZONE_REQUIREMENTS)) {
+                curTotal += currentResults[z].total;
+                curNC += currentResults[z].anyNC;
+                propTotal += proposedResults[z].total;
+                propNC += proposedResults[z].anyNC;
+            }
+            const curPct = curTotal > 0 ? Math.round(curNC / curTotal * 100) : 0;
+            const propPct = propTotal > 0 ? Math.round(propNC / propTotal * 100) : 0;
+            const delta = propPct - curPct;
+            const sign = delta > 0 ? '+' : '';
+            const color = delta < 0 ? '#8fffb0' : delta > 0 ? '#ffb3b3' : '#fff';
+
+            container.className = 'comparison-summary-bar';
+            container.innerHTML = `
+                    <div class="subtitle">Your changes would ${delta <= 0 ? 'reduce' : 'increase'} overall nonconformity</div>
+                    <div class="big-number" style="color:${color}">${curPct}% &rarr; ${propPct}% (${sign}${delta} pp)</div>
+                    <div class="subtitle">${curNC.toLocaleString()} &rarr; ${propNC.toLocaleString()} nonconforming parcels</div>`;
+        }
+
+        function compDelta(curNum, curDenom, propNum, propDenom) {
+            const curPct = curDenom > 0 ? Math.round(curNum / curDenom * 100) : null;
+            const propPct = propDenom > 0 ? Math.round(propNum / propDenom * 100) : null;
+            if (curPct === null && propPct === null) return { text: '-', cls: '' };
+            if (curPct === null) return { text: propPct + '%', cls: '' };
+            if (propPct === null) return { text: '-', cls: '' };
+            const d = propPct - curPct;
+            if (d === 0) return { text: curPct + '%', cls: '' };
+            const sign = d > 0 ? '+' : '';
+            const cls = d < 0 ? 'delta-negative' : 'delta-positive';
+            return { text: `${propPct}% (${sign}${d})`, cls };
+        }
+
+        function renderUnifiedComparison(currentResults, proposedResults) {
+            const container = document.getElementById('comparison-unified-container');
+            const zoneOrder = Object.keys(ZONE_REQUIREMENTS);
+
+            let html = `<table><tr>
+                <th>Zone</th><th>Lot Size</th><th>Frontage</th><th>Coverage</th><th>Any</th>
+            </tr>`;
+
+            zoneOrder.forEach(z => {
+                const cur = currentResults[z];
+                const prop = proposedResults[z];
+                if (cur.total === 0) return;
+
+                const lot = compDelta(cur.lotNC, cur.lotTested, prop.lotNC, prop.lotTested);
+                const front = compDelta(cur.frontNC, cur.frontTested, prop.frontNC, prop.frontTested);
+                const cov = compDelta(cur.covNC, cur.covTested, prop.covNC, prop.covTested);
+                const any = compDelta(cur.anyNC, cur.total, prop.anyNC, prop.total);
+
+                const anyChanged = any.cls !== '';
+                const rowClass = anyChanged ? (any.cls === 'delta-negative' ? 'diff-improved' : 'diff-worsened') : '';
+
+                html += `<tr class="${rowClass}" data-zone="${z}">
+                    <td>${z}</td>
+                    <td class="${lot.cls}">${lot.text}</td>
+                    <td class="${front.cls}">${front.text}</td>
+                    <td class="${cov.cls}">${cov.text}</td>
+                    <td class="${any.cls}" style="font-weight:600">${any.text}</td>
+                </tr>`;
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+            bindZoneRowHover(container);
+        }
+
+        function renderMobileComparison(currentResults, proposedResults) {
+            const container = document.getElementById('comparison-unified-container');
+            const zoneOrder = Object.keys(ZONE_REQUIREMENTS);
+            let html = '<div class="swipe-container">';
+
+            zoneOrder.forEach(z => {
+                const cur = currentResults[z];
+                const prop = proposedResults[z];
+                if (cur.total === 0) return;
+
+                const curPct = cur.total > 0 ? Math.round(cur.anyNC / cur.total * 100) : 0;
+                const propPct = prop.total > 0 ? Math.round(prop.anyNC / prop.total * 100) : 0;
+                const delta = propPct - curPct;
+                if (delta === 0) return;
+                const sign = delta > 0 ? '+' : '';
+                const color = delta < 0 ? '#28a745' : '#dc3545';
+
+                html += `<div class="swipe-card">
+                    <strong>${z}</strong> (${cur.total} parcels)<br>
+                    <span style="color:#666">${curPct}%</span> &rarr;
+                    <strong style="color:${color}">${propPct}%</strong>
+                    <span style="color:${color};font-size:11px;">(${sign}${delta} pp)</span>
+                </div>`;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function renderComparisonChart(currentResults, proposedResults) {
+            const container = document.getElementById('comparison-chart-container');
+            const zoneOrder = Object.keys(ZONE_REQUIREMENTS);
+
+            let hasChanges = false;
+            const rows = [];
+            zoneOrder.forEach(z => {
+                const cur = currentResults[z];
+                const prop = proposedResults[z];
+                if (cur.total === 0) return;
+                const curPct = cur.total > 0 ? Math.round(cur.anyNC / cur.total * 100) : 0;
+                const propPct = prop.total > 0 ? Math.round(prop.anyNC / prop.total * 100) : 0;
+                if (curPct !== propPct) {
+                    hasChanges = true;
+                    rows.push({ zone: z, curPct, propPct });
+                }
+            });
+
+            if (!hasChanges) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = `<div class="comparison-chart">
+                <h3 style="font-size:13px;margin-bottom:8px;">Nonconformity Change by Zone</h3>
+                <div class="chart-legend-inline">
+                    <span class="leg-current">Current</span>
+                    <span class="leg-proposed">Proposed</span>
+                </div>`;
+
+            rows.forEach(r => {
+                const delta = r.propPct - r.curPct;
+                const sign = delta > 0 ? '+' : '';
+                const deltaCls = delta < 0 ? 'improved' : 'worsened';
+                html += `<div class="chart-row">
+                    <span class="chart-label">${r.zone}</span>
+                    <div class="chart-bar-group">
+                        <div class="chart-bar-row">
+                            <div class="chart-bar current" style="width:${Math.max(r.curPct, 1)}%"></div>
+                            <span class="chart-bar-label current">${r.curPct}%</span>
+                        </div>
+                        <div class="chart-bar-row">
+                            <div class="chart-bar proposed" style="width:${Math.max(r.propPct, 1)}%"></div>
+                            <span class="chart-bar-label proposed">${r.propPct}%</span>
+                            <span class="chart-delta-label ${deltaCls}">${sign}${delta}</span>
+                        </div>
+                    </div>
+                </div>`;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        // ========== Computation ==========
+        function computeNonconformity(requirements, mode) {
+            const results = {};
+            const allZones = Object.keys(ZONE_REQUIREMENTS);
+            allZones.forEach(z => {
+                results[z] = { total: 0, lotNC: 0, frontNC: 0, covNC: 0, anyNC: 0,
+                               lotTested: 0, frontTested: 0, covTested: 0 };
+            });
+
+            if (typeof PARCEL_DATA === 'undefined') return results;
+
+            PARCEL_DATA.forEach(p => {
+                let zone;
+                if (mode === 'proposed') {
+                    zone = zoneOverrides.has(p.l) ? zoneOverrides.get(p.l) : (p.pz || p.z);
+                } else {
+                    zone = p.z;
+                }
+                if (!results[zone]) return;
+                const req = requirements[zone];
+                if (!req) return;
+
+                results[zone].total++;
+                let anyNC = false;
+
+                if (req.minLot !== null && p.s !== null) {
+                    results[zone].lotTested++;
+                    if (p.s < req.minLot) { results[zone].lotNC++; anyNC = true; }
+                }
+
+                if (req.minFrontage !== null && p.f !== null) {
+                    results[zone].frontTested++;
+                    if (p.f < req.minFrontage) { results[zone].frontNC++; anyNC = true; }
+                }
+
+                if (req.maxCoverage !== null && p.c !== null) {
+                    results[zone].covTested++;
+                    if (p.c > req.maxCoverage) { results[zone].covNC++; anyNC = true; }
+                }
+
+                if (anyNC) results[zone].anyNC++;
+            });
+
+            return results;
+        }
+
+        function pctStr(num, denom) {
+            if (denom === 0) return '-';
+            return Math.round(num / denom * 100) + '%';
+        }
+
+        function pctClass(num, denom) {
+            if (denom === 0) return '';
+            const pct = num / denom * 100;
+            if (pct >= 50) return 'nc-high';
+            if (pct >= 25) return 'nc-med';
+            return 'nc-low';
+        }
+
+        const sortStates = {};
+
+        function getSortValue(r, col) {
+            if (col === 0) return r.zone;
+            if (col === 1) return r.total;
+            if (col === 2) return r.lotTested > 0 ? r.lotNC / r.lotTested : -1;
+            if (col === 3) return r.frontTested > 0 ? r.frontNC / r.frontTested : -1;
+            if (col === 4) return r.covTested > 0 ? r.covNC / r.covTested : -1;
+            if (col === 5) return r.total > 0 ? r.anyNC / r.total : -1;
+            return 0;
+        }
+
+        function heatmapColor(pct) {
+            if (pct >= 50) return 'rgba(220,53,69,0.35)';
+            if (pct >= 35) return 'rgba(253,126,20,0.35)';
+            if (pct >= 20) return 'rgba(255,193,7,0.35)';
+            return 'rgba(40,167,69,0.25)';
+        }
+
+        function barFillColor(pct) {
+            if (pct >= 50) return 'rgba(220,53,69,0.15)';
+            if (pct >= 25) return 'rgba(253,126,20,0.12)';
+            return 'rgba(40,167,69,0.10)';
+        }
+
+        function pctWithCount(num, denom) {
+            if (denom === 0) return { text: '-', pct: 0 };
+            const pct = Math.round(num / denom * 100);
+            return { text: `${pct}%`, count: `(${num})`, pct };
+        }
+
+        function renderHeatmapStrip(results) {
+            const zoneOrder = Object.keys(ZONE_REQUIREMENTS);
+            let html = '<div class="heatmap-strip">';
+            zoneOrder.forEach(z => {
+                const r = results[z];
+                if (r.total === 0) return;
+                const pct = Math.round(r.anyNC / r.total * 100);
+                html += `<div class="heatmap-block" style="background:${heatmapColor(pct)}" title="${z}: ${pct}% nonconforming">${z}</div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        function renderSummaryTable(containerId, results) {
+            const container = document.getElementById(containerId);
+            const zoneOrder = Object.keys(ZONE_REQUIREMENTS);
+
+            const headers = ['Zone', '#', 'Lot Size', 'Frontage', 'Coverage', 'Any'];
+            const sortState = sortStates[containerId] || { col: null, asc: true };
+
+            // Heatmap strip
+            let html = '';
+
+            html += `<table><tr>`;
+            headers.forEach((h, i) => {
+                const arrow = sortState.col === i ? (sortState.asc ? '<span class="sort-arrow">&#9650;</span>' : '<span class="sort-arrow">&#9660;</span>') : '';
+                html += `<th class="sortable" data-col="${i}" data-container="${containerId}">${h}${arrow}</th>`;
+            });
+            html += `</tr>`;
+
+            let rows = [];
+            let totals = { total: 0, lotNC: 0, frontNC: 0, covNC: 0, anyNC: 0,
+                           lotTested: 0, frontTested: 0, covTested: 0 };
+
+            zoneOrder.forEach(z => {
+                const r = results[z];
+                if (r.total === 0) return;
+                Object.keys(totals).forEach(k => totals[k] += r[k]);
+                rows.push({ zone: z, ...r });
+            });
+
+            if (sortState.col !== null) {
+                rows.sort((a, b) => {
+                    const va = getSortValue(a, sortState.col);
+                    const vb = getSortValue(b, sortState.col);
+                    if (va < vb) return sortState.asc ? -1 : 1;
+                    if (va > vb) return sortState.asc ? 1 : -1;
+                    return 0;
+                });
+            }
+
+            // Find worst row (highest "Any Requirement" %)
+            let worstIdx = -1, worstPct = -1;
+            rows.forEach((r, i) => {
+                if (r.total > 0) {
+                    const pct = r.anyNC / r.total * 100;
+                    if (pct > worstPct) { worstPct = pct; worstIdx = i; }
+                }
+            });
+
+            rows.forEach((r, i) => {
+                const isWorst = i === worstIdx;
+                const lotInfo = pctWithCount(r.lotNC, r.lotTested);
+                const frontInfo = pctWithCount(r.frontNC, r.frontTested);
+                const covInfo = pctWithCount(r.covNC, r.covTested);
+                const anyInfo = pctWithCount(r.anyNC, r.total);
+
+                html += `<tr class="${isWorst ? 'worst-row' : ''}" data-zone="${r.zone}">
+                    <td>${r.zone}</td>
+                    <td>${r.total.toLocaleString()}</td>
+                    <td class="bar-cell ${pctClass(r.lotNC, r.lotTested)}"><div class="bar-fill" style="width:${lotInfo.pct}%;background:${barFillColor(lotInfo.pct)}"></div><span class="bar-text">${lotInfo.text} <span class="count-detail">${lotInfo.count || ''}</span></span></td>
+                    <td class="bar-cell ${pctClass(r.frontNC, r.frontTested)}"><div class="bar-fill" style="width:${frontInfo.pct}%;background:${barFillColor(frontInfo.pct)}"></div><span class="bar-text">${frontInfo.text} <span class="count-detail">${frontInfo.count || ''}</span></span></td>
+                    <td class="bar-cell ${pctClass(r.covNC, r.covTested)}"><div class="bar-fill" style="width:${covInfo.pct}%;background:${barFillColor(covInfo.pct)}"></div><span class="bar-text">${covInfo.text} <span class="count-detail">${covInfo.count || ''}</span></span></td>
+                    <td class="bar-cell ${pctClass(r.anyNC, r.total)}"><div class="bar-fill" style="width:${anyInfo.pct}%;background:${barFillColor(anyInfo.pct)}"></div><span class="bar-text">${anyInfo.text} <span class="count-detail">${anyInfo.count || ''}</span></span></td>
+                </tr>`;
+            });
+
+            const tLot = pctWithCount(totals.lotNC, totals.lotTested);
+            const tFront = pctWithCount(totals.frontNC, totals.frontTested);
+            const tCov = pctWithCount(totals.covNC, totals.covTested);
+            const tAny = pctWithCount(totals.anyNC, totals.total);
+
+            html += `<tr class="total-row">
+                <td>Total</td>
+                <td>${totals.total.toLocaleString()}</td>
+                <td class="${pctClass(totals.lotNC, totals.lotTested)}">${tLot.text} <span class="count-detail">${tLot.count || ''}</span></td>
+                <td class="${pctClass(totals.frontNC, totals.frontTested)}">${tFront.text} <span class="count-detail">${tFront.count || ''}</span></td>
+                <td class="${pctClass(totals.covNC, totals.covTested)}">${tCov.text} <span class="count-detail">${tCov.count || ''}</span></td>
+                <td class="${pctClass(totals.anyNC, totals.total)}">${tAny.text} <span class="count-detail">${tAny.count || ''}</span></td>
+            </tr></table>`;
+
+            container.innerHTML = html;
+            bindZoneRowHover(container);
+
+            container.querySelectorAll('th.sortable').forEach(th => {
+                th.addEventListener('click', () => {
+                    const col = parseInt(th.dataset.col);
+                    const cid = th.dataset.container;
+                    if (!sortStates[cid]) sortStates[cid] = { col: null, asc: true };
+                    if (sortStates[cid].col === col) {
+                        sortStates[cid].asc = !sortStates[cid].asc;
+                    } else {
+                        sortStates[cid].col = col;
+                        sortStates[cid].asc = col === 0;
+                    }
+                    if (panelView === 'summary') {
+                        const r = computeNonconformity(ZONE_REQUIREMENTS, 'existing');
+                        renderSummaryTable('summary-table-container', r);
+                    } else if (panelView === 'comparison') {
+                        renderComparison();
+                    }
+                });
+            });
+        }
+
+        const ZONE_GROUPS = [
+            { label: 'Residential', zones: ['RA1', 'RA2', 'RA3', 'RA4', 'RB', 'RC', 'RD'] },
+            { label: 'Business', zones: ['BA', 'BB', 'BC'] },
+            { label: 'Commercial / Mixed', zones: ['C', 'CR'] },
+            { label: 'Other', zones: ['HR1', 'HR2', 'I', 'LC'] }
+        ];
+
+        function computeZoneNonconformity(zone, reqs) {
+            let total = 0, anyNC = 0;
+            if (typeof PARCEL_DATA === 'undefined') return { total: 0, pct: 0 };
+            PARCEL_DATA.forEach(p => {
+                const pz = zoneOverrides.has(p.l) ? zoneOverrides.get(p.l) : (p.pz || p.z);
+                if (pz !== zone) return;
+                const req = reqs[zone];
+                if (!req) return;
+                total++;
+                let nc = false;
+                if (req.minLot !== null && p.s !== null && p.s < req.minLot) nc = true;
+                if (req.minFrontage !== null && p.f !== null && p.f < req.minFrontage) nc = true;
+                if (req.maxCoverage !== null && p.c !== null && p.c > req.maxCoverage) nc = true;
+                if (nc) anyNC++;
+            });
+            return { total, pct: total > 0 ? Math.round(anyNC / total * 100) : 0, anyNC };
+        }
+
+        function renderRequirementsTable() {
+            const container = document.getElementById('requirements-container');
+            const currentNC = computeNonconformity(ZONE_REQUIREMENTS, 'existing');
+
+            let html = `<table>
+                <tr><th>Zone</th><th>Min Lot (sqft)</th><th>Min Frontage (ft)</th><th>Max Coverage (%)</th></tr>`;
+
+            ZONE_GROUPS.forEach(group => {
+                html += `<tr class="zone-group-header"><td colspan="4">${group.label}</td></tr>`;
+
+                group.zones.forEach(z => {
+                    if (!ZONE_REQUIREMENTS[z]) return;
+                    const cur = ZONE_REQUIREMENTS[z];
+                    const prop = PROPOSED_REQUIREMENTS[z];
+
+                    const ncData = currentNC[z];
+                    const ncPct = ncData && ncData.total > 0 ? Math.round(ncData.anyNC / ncData.total * 100) : 0;
+                    const ncBg = ncPct >= 50 ? '#dc3545' : ncPct >= 25 ? '#fd7e14' : '#28a745';
+
+                    const lotVal = prop.minLot !== null ? prop.minLot : '';
+                    const frontVal = prop.minFrontage !== null ? prop.minFrontage : '';
+                    const covVal = prop.maxCoverage !== null ? Math.round(prop.maxCoverage * 100) : '';
+
+                    const lotChanged = prop.minLot !== cur.minLot ? 'changed' : '';
+                    const frontChanged = prop.minFrontage !== cur.minFrontage ? 'changed' : '';
+                    const covChanged = prop.maxCoverage !== cur.maxCoverage ? 'changed' : '';
+
+                    html += `<tr data-zone="${z}">
+                        <td>${z}<span class="zone-nc-indicator" style="background:${ncBg}">${ncPct}%</span></td>
+                        <td>
+                            <input type="number" class="${lotChanged}" value="${lotVal}" data-zone="${z}" data-field="minLot" oninput="debouncedUpdate(this)">
+                            ${lotChanged ? `<button class="reset-field-btn" onclick="resetField('${z}','minLot')" title="Reset to original">&#8634;</button>` : ''}
+                            <span class="live-delta" id="delta-${z}-minLot"></span>
+                        </td>
+                        <td>
+                            <input type="number" class="${frontChanged}" value="${frontVal}" data-zone="${z}" data-field="minFrontage" oninput="debouncedUpdate(this)">
+                            ${frontChanged ? `<button class="reset-field-btn" onclick="resetField('${z}','minFrontage')" title="Reset to original">&#8634;</button>` : ''}
+                            <span class="live-delta" id="delta-${z}-minFrontage"></span>
+                        </td>
+                        <td>
+                            <input type="number" class="${covChanged}" value="${covVal}" data-zone="${z}" data-field="maxCoverage" oninput="debouncedUpdate(this)" min="0" max="100">
+                            ${covChanged ? `<button class="reset-field-btn" onclick="resetField('${z}','maxCoverage')" title="Reset to original">&#8634;</button>` : ''}
+                            <span class="live-delta" id="delta-${z}-maxCoverage"></span>
+                        </td>
+                    </tr>`;
+                });
+            });
+
+            html += '</table>';
+            container.innerHTML = html;
+            bindZoneRowHover(container);
+
+            // Populate lasso zone select
+            const select = document.getElementById('lasso-zone-select');
+            if (select) {
+                select.innerHTML = '<option value="">Assign zone...</option>';
+                Object.keys(ZONE_REQUIREMENTS).forEach(z => {
+                    select.innerHTML += `<option value="${z}">${z}</option>`;
+                });
+            }
+        }
+
+        function debouncedUpdate(input) {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                updateRequirement(input);
+                showLiveDelta(input);
+            }, 150);
+        }
+
+        function showLiveDelta(input) {
+            const zone = input.dataset.zone;
+            const field = input.dataset.field;
+            const deltaEl = document.getElementById(`delta-${zone}-${field}`);
+            if (!deltaEl) return;
+
+            const curResult = computeZoneNonconformity(zone, ZONE_REQUIREMENTS);
+            const propResult = computeZoneNonconformity(zone, PROPOSED_REQUIREMENTS);
+            const diff = propResult.anyNC - curResult.anyNC;
+
+            if (diff === 0) {
+                deltaEl.textContent = '';
+                deltaEl.className = 'live-delta';
+            } else {
+                const sign = diff > 0 ? '+' : '';
+                deltaEl.textContent = `${sign}${diff} parcels`;
+                deltaEl.className = `live-delta ${diff < 0 ? 'improved' : 'worsened'}`;
+            }
+        }
+
+        function updateRequirement(input) {
+            const zone = input.dataset.zone;
+            const field = input.dataset.field;
+            const val = input.value.trim();
+
+            if (val === '') {
+                PROPOSED_REQUIREMENTS[zone][field] = null;
+            } else if (field === 'maxCoverage') {
+                PROPOSED_REQUIREMENTS[zone][field] = parseFloat(val) / 100;
+            } else {
+                PROPOSED_REQUIREMENTS[zone][field] = parseFloat(val);
+            }
+
+            const cur = ZONE_REQUIREMENTS[zone][field];
+            const prop = PROPOSED_REQUIREMENTS[zone][field];
+            input.classList.toggle('changed', prop !== cur);
+            updateStepperState();
+        }
+
+        function applyPreset(type) {
+            const allZones = Object.keys(ZONE_REQUIREMENTS);
+            if (type === 'removeLot') {
+                allZones.forEach(z => PROPOSED_REQUIREMENTS[z].minLot = null);
+            } else if (type === 'removeFrontage') {
+                allZones.forEach(z => PROPOSED_REQUIREMENTS[z].minFrontage = null);
+            } else if (type === 'reset') {
+                allZones.forEach(z => {
+                    PROPOSED_REQUIREMENTS[z] = JSON.parse(JSON.stringify(ZONE_REQUIREMENTS[z]));
+                });
+            }
+            renderRequirementsTable();
+            updateStepperState();
+        }
+
+        function resetField(zone, field) {
+            PROPOSED_REQUIREMENTS[zone][field] = ZONE_REQUIREMENTS[zone][field];
+            renderRequirementsTable();
+        }
+
+        function resetReassignments() {
+            zoneOverrides.clear();
+            updateReassignmentStatus();
+            updateReassignedLayer();
+        }
+
+        function updateReassignmentStatus() {
+            const el = document.getElementById('reassignment-status');
+            const count = zoneOverrides.size;
+            if (count > 0) {
+                el.style.display = 'flex';
+                document.getElementById('reassignment-count').textContent =
+                    `${count} parcel${count !== 1 ? 's' : ''} reassigned`;
+            } else {
+                el.style.display = 'none';
+            }
+        }
+
+        function downloadReassignments() {
+            if (zoneOverrides.size === 0) return;
+            let csv = 'LOC_ID,Original_Zone,New_Zone\n';
+            zoneOverrides.forEach((newZone, locId) => {
+                const p = parcelByLocId.get(locId);
+                const origZone = p ? p.z : '';
+                csv += `${locId},${origZone},${newZone}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'zone_reassignments.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function downloadProposedChanges() {
+            const currentResults = computeNonconformity(ZONE_REQUIREMENTS, 'existing');
+            const proposedResults = computeNonconformity(PROPOSED_REQUIREMENTS, 'proposed');
+            const allZones = Object.keys(ZONE_REQUIREMENTS);
+
+            let csv = '';
+
+            // Nonconformity comparison — all indicators
+            const pct = (num, denom) => denom > 0 ? Math.round(num / denom * 100) : '';
+            csv += 'Zone,Parcels,Lot_Current_%,Lot_Proposed_%,Lot_Change_pp,Frontage_Current_%,Frontage_Proposed_%,Frontage_Change_pp,Coverage_Current_%,Coverage_Proposed_%,Coverage_Change_pp,Any_Current_%,Any_Proposed_%,Any_Change_pp\n';
+            allZones.forEach(z => {
+                const cur = currentResults[z];
+                const prop = proposedResults[z];
+                if (cur.total === 0) return;
+                const cLot = pct(cur.lotNC, cur.lotTested);
+                const pLot = pct(prop.lotNC, prop.lotTested);
+                const cFront = pct(cur.frontNC, cur.frontTested);
+                const pFront = pct(prop.frontNC, prop.frontTested);
+                const cCov = pct(cur.covNC, cur.covTested);
+                const pCov = pct(prop.covNC, prop.covTested);
+                const cAny = pct(cur.anyNC, cur.total);
+                const pAny = pct(prop.anyNC, prop.total);
+                const delta = (a, b) => (a !== '' && b !== '') ? b - a : '';
+                csv += `${z},${cur.total},${cLot},${pLot},${delta(cLot, pLot)},${cFront},${pFront},${delta(cFront, pFront)},${cCov},${pCov},${delta(cCov, pCov)},${cAny},${pAny},${delta(cAny, pAny)}\n`;
+            });
+
+            // Dimensional requirement changes
+            csv += '\nZone,Field,Current_Value,Proposed_Value\n';
+            allZones.forEach(z => {
+                const cur = ZONE_REQUIREMENTS[z];
+                const prop = PROPOSED_REQUIREMENTS[z];
+                if (cur.minLot !== prop.minLot) {
+                    csv += `${z},Min Lot (sqft),${cur.minLot ?? 'none'},${prop.minLot ?? 'none'}\n`;
+                }
+                if (cur.minFrontage !== prop.minFrontage) {
+                    csv += `${z},Min Frontage (ft),${cur.minFrontage ?? 'none'},${prop.minFrontage ?? 'none'}\n`;
+                }
+                if (cur.maxCoverage !== prop.maxCoverage) {
+                    csv += `${z},Max Coverage (%),${cur.maxCoverage !== null ? Math.round(cur.maxCoverage * 100) : 'none'},${prop.maxCoverage !== null ? Math.round(prop.maxCoverage * 100) : 'none'}\n`;
+                }
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'proposed_zoning_changes.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function reassignZone(locId, originalZone, newZone) {
+            if (newZone === originalZone) {
+                zoneOverrides.delete(locId);
+            } else {
+                zoneOverrides.set(locId, newZone);
+            }
+            updateReassignmentStatus();
+            updateStepperState();
+            updateReassignedLayer();
+            if (panelView === 'comparison') renderComparison();
+        }
+
+        // ========== Phase 5: Map-Panel Integration ==========
+        function highlightZoneOnMap(zoneName) {
+            if (!map.getLayer('zone-dim')) return;
+            map.setFilter('zone-dim', ['!=', ['get', 'NAME'], zoneName]);
+            map.setLayoutProperty('zone-dim', 'visibility', 'visible');
+        }
+
+        function clearZoneHighlight() {
+            if (!map.getLayer('zone-dim')) return;
+            map.setLayoutProperty('zone-dim', 'visibility', 'none');
+        }
+
+        function bindZoneRowHover(container) {
+            container.querySelectorAll('tr[data-zone]').forEach(row => {
+                row.addEventListener('mouseenter', () => {
+                    highlightZoneOnMap(row.dataset.zone);
+                    row.classList.add('zone-row-hover');
+                });
+                row.addEventListener('mouseleave', () => {
+                    clearZoneHighlight();
+                    row.classList.remove('zone-row-hover');
+                });
+            });
+        }
+
+
+        // ========== Phase 6: Accordion & Lasso ==========
+        function toggleReassignAccordion() {
+            const body = document.getElementById('reassign-accordion-body');
+            const icon = document.getElementById('reassign-toggle-icon');
+            body.classList.toggle('open');
+            icon.innerHTML = body.classList.contains('open') ? '&#9660;' : '&#9654;';
+        }
+
+        let lassoMode = false;
+        let lassoPoints = [];
+        let lassoComplete = false;
+        let lassoSelectedIds = [];
+
+        function startLasso() {
+            lassoMode = true;
+            lassoComplete = false;
+            lassoPoints = [];
+            lassoSelectedIds = [];
+            document.getElementById('lasso-btn').classList.add('active');
+            document.getElementById('lasso-btn').style.display = 'none';
+            document.getElementById('lasso-cancel-btn').style.display = '';
+            document.getElementById('lasso-status').textContent = 'Click on the map to draw a selection polygon. Double-click to finish.';
+            map.getCanvas().style.cursor = 'crosshair';
+
+            clearLassoLayers();
+        }
+
+        function cancelLasso() {
+            lassoMode = false;
+            lassoComplete = false;
+            lassoPoints = [];
+            lassoSelectedIds = [];
+            document.getElementById('lasso-btn').classList.remove('active');
+            document.getElementById('lasso-btn').style.display = '';
+            document.getElementById('lasso-cancel-btn').style.display = 'none';
+            document.getElementById('lasso-zone-select').style.display = 'none';
+            document.getElementById('lasso-status').textContent = '';
+            map.getCanvas().style.cursor = '';
+
+            clearLassoLayers();
+        }
+
+        function clearLassoLayers() {
+            if (map.getSource('lasso-polygon')) {
+                map.getSource('lasso-polygon').setData({ type: 'FeatureCollection', features: [] });
+            }
+            if (map.getSource('lasso-cursor')) {
+                map.getSource('lasso-cursor').setData({ type: 'FeatureCollection', features: [] });
+            }
+            if (map.getSource('lasso-vertices')) {
+                map.getSource('lasso-vertices').setData({ type: 'FeatureCollection', features: [] });
+            }
+        }
+
+        function addLassoPoint(lngLat) {
+            lassoPoints.push([lngLat.lng, lngLat.lat]);
+            updateLassoPolygon();
+            updateLassoVertices();
+        }
+
+        function updateLassoPolygon() {
+            if (!map.getSource('lasso-polygon')) return;
+            if (lassoPoints.length < 2) {
+                map.getSource('lasso-polygon').setData({ type: 'FeatureCollection', features: [] });
+                return;
+            }
+            const closed = [...lassoPoints, lassoPoints[0]];
+            map.getSource('lasso-polygon').setData({
+                type: 'Feature',
+                geometry: {
+                    type: lassoPoints.length >= 3 ? 'Polygon' : 'LineString',
+                    coordinates: lassoPoints.length >= 3 ? [closed] : lassoPoints
+                }
+            });
+        }
+
+        function updateLassoCursorLine(lngLat) {
+            if (!map.getSource('lasso-cursor') || lassoPoints.length === 0) return;
+            const cursor = [lngLat.lng, lngLat.lat];
+            const coords = lassoPoints.length >= 2
+                ? [lassoPoints[0], cursor, lassoPoints[lassoPoints.length - 1]]
+                : [lassoPoints[0], cursor];
+            map.getSource('lasso-cursor').setData({
+                type: 'Feature',
+                geometry: { type: 'LineString', coordinates: coords }
+            });
+        }
+
+        function updateLassoVertices() {
+            if (!map.getSource('lasso-vertices')) return;
+            map.getSource('lasso-vertices').setData({
+                type: 'FeatureCollection',
+                features: lassoPoints.map(p => ({
+                    type: 'Feature',
+                    geometry: { type: 'Point', coordinates: p }
+                }))
+            });
+        }
+
+        function finishLasso() {
+            if (lassoPoints.length < 3) {
+                cancelLasso();
+                return;
+            }
+
+            lassoMode = false;
+            lassoComplete = true;
+            map.getCanvas().style.cursor = '';
+
+            // Clear the cursor line
+            if (map.getSource('lasso-cursor')) {
+                map.getSource('lasso-cursor').setData({ type: 'FeatureCollection', features: [] });
+            }
+
+            // Ensure the final polygon is drawn closed
+            updateLassoPolygon();
+
+            // Find parcels inside the polygon
+            const polygon = [...lassoPoints, lassoPoints[0]];
+            lassoSelectedIds = [];
+
+            if (typeof PARCEL_DATA !== 'undefined') {
+                const features = map.queryRenderedFeatures({ layers: ['Parcels'] });
+                const seen = new Set();
+                features.forEach(f => {
+                    const locId = f.properties.LOC_ID;
+                    if (!locId || seen.has(locId)) return;
+                    seen.add(locId);
+                    const pd = parcelByLocId.get(locId);
+                    if (!pd) return;
+                    const bounds = f.geometry;
+                    if (!bounds || !bounds.coordinates) return;
+                    const center = getPolygonCenter(bounds.coordinates[0]);
+                    if (pointInPolygon(center, polygon)) {
+                        lassoSelectedIds.push(locId);
+                    }
+                });
+            }
+
+            document.getElementById('lasso-status').textContent = `${lassoSelectedIds.length} parcels selected. Choose a zone to assign:`;
+            document.getElementById('lasso-zone-select').style.display = '';
+            document.getElementById('lasso-zone-select').onchange = function() {
+                if (this.value) {
+                    bulkReassign(lassoSelectedIds, this.value);
+                    cancelLasso();
+                }
+            };
+        }
+
+        function isClickInsideLasso(lngLat) {
+            if (lassoPoints.length < 3) return false;
+            const polygon = [...lassoPoints, lassoPoints[0]];
+            return pointInPolygon([lngLat.lng, lngLat.lat], polygon);
+        }
+
+        function getPolygonCenter(coords) {
+            if (!coords || coords.length === 0) return [0, 0];
+            let sumLng = 0, sumLat = 0;
+            coords.forEach(c => { sumLng += c[0]; sumLat += c[1]; });
+            return [sumLng / coords.length, sumLat / coords.length];
+        }
+
+        function pointInPolygon(point, polygon) {
+            const x = point[0], y = point[1];
+            let inside = false;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                const xi = polygon[i][0], yi = polygon[i][1];
+                const xj = polygon[j][0], yj = polygon[j][1];
+                const intersect = ((yi > y) !== (yj > y)) && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+                if (intersect) inside = !inside;
+            }
+            return inside;
+        }
+
+        function bulkReassign(locIds, newZone) {
+            locIds.forEach(locId => {
+                const p = parcelByLocId.get(locId);
+                if (!p) return;
+                if (p.z === newZone) {
+                    zoneOverrides.delete(locId);
+                } else {
+                    zoneOverrides.set(locId, newZone);
+                }
+            });
+            updateReassignmentStatus();
+            updateStepperState();
+            updateReassignedLayer();
+        }
+
+        // Track which parcels have been colored so we can clear them
+        let previouslyColoredIds = new Set();
+
+        function getZoneColor(zoneName) {
+            const idx = zones.indexOf(zoneName);
+            return idx >= 0 ? zoneColors[idx] : '#AAAAAA';
+        }
+
+        function updateReassignedLayer() {
+            // Clear previous feature states
+            previouslyColoredIds.forEach(locId => {
+                map.setFeatureState({ source: 'allparcels', id: locId }, { reassignedColor: null });
+            });
+            previouslyColoredIds.clear();
+
+            // Set new colors
+            zoneOverrides.forEach((newZone, locId) => {
+                const color = getZoneColor(newZone);
+                map.setFeatureState({ source: 'allparcels', id: locId }, { reassignedColor: color });
+                previouslyColoredIds.add(locId);
+            });
+
+            // Update outline filter
+            if (!map.getLayer('reassigned-parcels-outline')) return;
+            if (zoneOverrides.size === 0) {
+                map.setFilter('reassigned-parcels-outline', ['==', ['get', 'LOC_ID'], '']);
+            } else {
+                const locIds = Array.from(zoneOverrides.keys());
+                map.setFilter('reassigned-parcels-outline', ['in', ['get', 'LOC_ID'], ['literal', locIds]]);
+            }
+        }
+
+        // Escape key: cancel lasso first, then close panel
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                if (lassoMode) {
+                    cancelLasso();
+                } else if (panelView !== 'closed') {
+                    closePanel();
+                }
+            }
+        });
+
+        // ========== Map constants ==========
+        const lotSizePalette = [
+            '#E2FDFF', '#D1EAFF', '#BFD7FF', '#9BB1FF', '#8A9EFF',
+            '#788BFF', '#5465FF', '#333FAC', '#1C2790', '#0D1667'
+        ];
 
         const uses = [
-            "Public/Ins",
-            "Single-fam",
-            "Vacant",
-            "Multi-fami",
-            "Industrial",
-            "Three-fami",
-            "Two-family",
-            "Other hous",
-            "Commercial",
-            "Mixed-use",
-            "Other",
-            "Hotel",
-            "Recreation",
-            "Nursing ho"
-        ]
+            "Public/Ins", "Single-fam", "Vacant", "Multi-fami", "Industrial",
+            "Three-fami", "Two-family", "Other hous", "Commercial", "Mixed-use",
+            "Other", "Hotel", "Recreation", "Nursing ho"
+        ];
 
         const useLabels = {
             "Public/Ins": "Public/Institutional (including open space)",
@@ -197,61 +2207,26 @@
         };
 
         const useColors = [
-            "#d4f088", // green
-            "#fff9dc", // light yellow
-            "#FFFFFF", // white
-            "#f18c1b", // orange
-            "#d5d5d5", // gray
-            "#f5b72d", // warmest yellow
-            "#f4dd63", // yellow
-            "#cf820f", // brown
-            "#f2b1c2", // pink
-            "#d899dd", // fuchsia
-            "#767676", // black
-            "#ff6969", // peach
-            "#8adfa9", // green (again)
-            "#cf820f"  // 
+            "#d4f088", "#fff9dc", "#FFFFFF", "#f18c1b", "#d5d5d5",
+            "#f5b72d", "#f4dd63", "#cf820f", "#f2b1c2", "#d899dd",
+            "#767676", "#ff6969", "#8adfa9", "#cf820f"
         ];
 
         const usesAndColors = uses.flatMap((use, i) => [use, useColors[i]]);
 
-        const zones = ['BA', 'BB', 'BC', 'C', 'CR', 'HR1', 'HR2', 'I', 'LC', 'RA1', 'RA2', 'RA3', 'RA4', 'RB', 'RC', 'RD']
-        const zonesProps = ['B1', 'MU', 'BC', 'C', 'CR', 'HR1', 'HR2', 'I', 'INST', 'C/RD', 'R1', 'R2', 'R3', 'R4']
+        const zones = ['BA', 'BB', 'BC', 'C', 'CR', 'HR1', 'HR2', 'I', 'LC', 'RA1', 'RA2', 'RA3', 'RA4', 'RB', 'RC', 'RD'];
+        const zonesProps = ['B1', 'MU', 'BC', 'C', 'CR', 'HR1', 'HR2', 'I', 'INST', 'C/RD', 'R1', 'R2', 'R3', 'R4'];
 
         const zoneColors = [
-            "#ffb3b3", // BA
-            "#f26b6b", // BB
-            "#a82940", // BC
-            "#f7d8d8", // C
-            "#bdd66b", // CR
-            "#0057e7", // HR1
-            "#734ac3", // HR2
-            "#b3b3b3", // I
-            "#b7a4ff", // LC
-            "#fff9dc", // RA1
-            "#fff099", // RA2
-            "#f4dd63", // RA3
-            "#f5b72d", // RA4
-            "#f18c1b", // RB
-            "#c87a12", // RC
-            "#a55a00"  // RD
+            "#ffb3b3", "#f26b6b", "#a82940", "#f7d8d8", "#bdd66b",
+            "#0057e7", "#734ac3", "#b3b3b3", "#b7a4ff", "#fff9dc",
+            "#fff099", "#f4dd63", "#f5b72d", "#f18c1b", "#c87a12", "#a55a00"
         ];
 
         const proposedColors = [
-            "#ffb3b3", // B1
-            "#f26b6b", // MU
-            "#a82940", // BC
-            "#f7d8d8", // C
-            "#bdd66b", // CR
-            "#0057e7", // HR1
-            "#734ac3", // HR2
-            "#b3b3b3", // I
-            "#36adaf", // INST
-            "#b7a4ff", // C/RD
-            "#fff9dc", // R1
-            "#f4dd63", // R2
-            "#f5b72d", // R3
-            "#c87a12", // R4
+            "#ffb3b3", "#f26b6b", "#a82940", "#f7d8d8", "#bdd66b",
+            "#0057e7", "#734ac3", "#b3b3b3", "#36adaf", "#b7a4ff",
+            "#fff9dc", "#f4dd63", "#f5b72d", "#c87a12"
         ];
 
         const zonesAndColors = zones.flatMap((zone, i) => [zone, zoneColors[i]]);
@@ -260,12 +2235,24 @@
         mapboxgl.accessToken = 'pk.eyJ1Ijoic2FyYWJyZW50IiwiYSI6ImNtMHpsb2Q4NTAwemoybHExbnB6eHVvZ2kifQ.nH0hUSv3IGzX6MkYB_cSmA';
         const map = new mapboxgl.Map({
             container: 'map',
-            // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
             style: 'mapbox://styles/communityscale/cmcuwuwcv00xz01s1gn7xccqi',
             zoom: 13,
-            center: [-71.238856,42.387311],
+            center: [-71.238856, 42.387311],
             projection: 'globe'
         });
+
+        // Loading spinner logic
+        const requiredSources = ['allparcels', 'proposedzone', 'frontage', 'coverfront', 'overlays'];
+        function checkSourcesLoaded() {
+            const allLoaded = requiredSources.every(s => {
+                try { return map.isSourceLoaded(s); } catch(e) { return false; }
+            });
+            if (allLoaded) {
+                document.getElementById('loading-overlay').classList.add('hidden');
+            }
+        }
+        map.on('sourcedata', checkSourcesLoaded);
+        map.on('load', () => setTimeout(checkSourcesLoaded, 500));
 
         const lotSizeBreakpoints = [0, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000];
         const legendEntries = {
@@ -293,10 +2280,7 @@
                 { color: lotSizePalette[8], label: '15,000-20,000 sqft' },
                 { color: lotSizePalette[9], label: '20,000+ sqft' }
             ],
-            'Zoning': zones.map((zone, i) => ({
-                color: zoneColors[i],
-                label: zone
-            })),
+            'Zoning': zones.map((zone, i) => ({ color: zoneColors[i], label: zone })),
             'Uses': [
                 { color: useColors[1], label: 'Single-family' },
                 { color: useColors[6], label: 'Two-family' },
@@ -312,7 +2296,6 @@
                 { color: useColors[2], label: 'Vacant' },
                 { color: useColors[10], label: 'Other use' },
             ],
-
             'Overlay': [
                 { color: 'black', label: 'ROD' },
                 { color: '#0040fe', label: 'LCRAP' },
@@ -322,8 +2305,8 @@
             ]
         };
 
-                    let labelLayerId; //pull text fields on top!!
-                map.on('style.load', () => {
+        let labelLayerId;
+        map.on('style.load', () => {
             const layers = map.getStyle().layers;
             for (const layer of layers) {
                 if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
@@ -332,259 +2315,140 @@
                 }
             }
         });
+
         map.on('load', () => {
-            // Set the default atmosphere style
             map.setFog({});
 
             map.addSource('mapillary', {
                 'type': 'vector',
-                'tiles': [
-                    'https://tiles.mapillary.com/maps/vtp/mly1_public/2/{z}/{x}/{y}?access_token=MLY|4142433049200173|72206abe5035850d6743b23a49c41333'
+                'tiles': ['https://tiles.mapillary.com/maps/vtp/mly1_public/2/{z}/{x}/{y}?access_token=MLY|4142433049200173|72206abe5035850d6743b23a49c41333'],
+                'minzoom': 8, 'maxzoom': 14
+            });
+
+            map.addSource('frontage', { type: 'geojson', data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/frontages.geojson' });
+            map.addSource('hydro', { type: 'geojson', data: 'hydrowalth.geojson' });
+            map.addSource('Boundary', { type: 'geojson', data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/walthamoutline.geojson' });
+            map.addSource('allparcels', { type: 'geojson', data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/existinguse.geojson', promoteId: "LOC_ID" });
+            map.addSource('overlays', { type: 'geojson', data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/overlays.geojson' });
+            map.addSource('proposedzone', { type: 'geojson', data: 'ProposedZone_26_03_11.geojson' });
+            map.addSource('water', { type: 'geojson', data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/water2.geojson' });
+            map.addSource('coverfront', { type: 'geojson', data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/coverfront.geojson' });
+
+            map.addLayer({ id: 'Uses', type: 'fill', source: 'allparcels', paint: {
+                'fill-color': ['match', ['string', ['get', 'SimplLU']], ...usesAndColors, '#AAAAAA'],
+                'fill-opacity': ["case", ["boolean", ["feature-state", "hover"], false], 0.5, 1],
+            }}, labelLayerId);
+
+            map.addLayer({ id: 'Zones', type: 'fill', source: 'allparcels', paint: {
+                'fill-color': ['match', ['string', ['get', 'NAME']], ...zonesAndColors, '#AAAAAA'],
+                'fill-opacity': ["case", ["boolean", ["feature-state", "hover"], false], 0.5, 1]
+            }}, labelLayerId);
+
+            map.addLayer({ id: 'Proposed-Zones', type: 'fill', source: 'proposedzone', paint: {
+                'fill-color': ['match', ['string', ['get', 'NAME']], ...zonesAndColors, '#AAAAAA'],
+                'fill-opacity': ["case", ["boolean", ["feature-state", "hover"], false], 0.5, 1]
+            }}, labelLayerId);
+
+            map.addLayer({ id: 'Lot-Sizes-of-Residential-Parcels', type: 'fill', source: 'allparcels', paint: {
+                'fill-outline-color': 'white',
+                'fill-color': ["case", ["==", ["get", "SQFT"], null], 'white',
+                    ["interpolate", ["linear"], ["get", "SQFT"],
+                        0, lotSizePalette[0], 4000, lotSizePalette[1], 5000, lotSizePalette[2],
+                        6000, lotSizePalette[3], 7000, lotSizePalette[4], 8000, lotSizePalette[5],
+                        9000, lotSizePalette[6], 10000, lotSizePalette[7], 15000, lotSizePalette[8],
+                        20000, lotSizePalette[9]]],
+                'fill-opacity': ["case", ["boolean", ["feature-state", "hover"], false], 0.5, 1],
+            }}, labelLayerId);
+
+            map.addLayer({ id: 'Residential-Parcels-Smaller-than-Minimum-Lot-Size', type: 'fill', source: 'allparcels', paint: {
+                'fill-color': ['match', ['get', 'LotTooSmal'], 1, 'rgba(0, 0, 0, .25)', 'rgba(0, 0, 0, 0)']
+            }}, labelLayerId);
+
+            map.addLayer({ id: 'hydro', type: 'fill', source: 'hydro', paint: { 'fill-color': '#d9eaf0' }}, labelLayerId);
+
+            map.addLayer({ id: 'Parcels', type: 'fill', source: 'allparcels', paint: {
+                'fill-outline-color': '#828282', 'fill-color': 'transparent', 'fill-opacity': 1,
+            }}, labelLayerId);
+
+            map.addLayer({ id: 'Too-Little-Frontage', type: 'line', source: 'frontage', paint: {
+                'line-width': 4, 'line-color': ['match', ['get', 'TooLilFrnt'], 1, 'black', 'transparent'],
+            }}, labelLayerId);
+
+            map.addLayer({ id: 'Too-Much-Coverage', type: 'fill', source: 'coverfront', paint: {
+                'fill-color': ['match', ['get', 'WalthamBuildingsv2_TooCovered'], "1", 'rgba(0, 0, 0, .25)', 'rgba(0, 0, 0, 0)']
+            }}, labelLayerId);
+
+            map.addLayer({ id: 'Too-Little-Setback', type: 'fill', source: 'coverfront', paint: {
+                'fill-color': ['match', ['get', 'WalthamBuildingsv2_TooLilSB'], "1", 'rgba(0, 0, 0, .25)', 'rgba(0, 0, 0, 0)']
+            }}, labelLayerId);
+
+            map.addLayer({ id: 'Overlay', type: 'line', source: 'overlays', paint: {
+                'line-width': 4,
+                'line-color': ['match', ['get', 'NAME'], 'ROD', 'black', 'LCRAP', '#0040fe', 'LCRA', '#21abe6', 'MCMOD', '#9971ff', 'MBTAW', '#006663', 'transparent'],
+            }}, labelLayerId);
+
+            map.addLayer({ id: 'Boundary', type: 'line', source: 'Boundary', paint: {
+                'line-width': 2, 'line-color': 'black'
+            }}, labelLayerId);
+
+            // Phase 5: Zone dim layer — covers all parcels NOT in the hovered zone
+            map.addLayer({ id: 'zone-dim', type: 'fill', source: 'allparcels', paint: {
+                'fill-color': 'white',
+                'fill-opacity': 0.7
+            }, layout: { 'visibility': 'none' } }, labelLayerId);
+
+            // Phase 6: Reassigned parcels fill layer (recolored to new zone)
+            map.addLayer({ id: 'reassigned-parcels', type: 'fill', source: 'allparcels', paint: {
+                'fill-color': ['case',
+                    ['==', ['feature-state', 'reassignedColor'], null], 'transparent',
+                    ['to-color', ['feature-state', 'reassignedColor']]
                 ],
-                'minzoom': 8,
-                'maxzoom': 14
-            })
+                'fill-opacity': ['case',
+                    ['==', ['feature-state', 'reassignedColor'], null], 0,
+                    0.85
+                ]
+            }}, labelLayerId);
+            // Dashed outline on reassigned parcels
+            map.addLayer({ id: 'reassigned-parcels-outline', type: 'line', source: 'allparcels', paint: {
+                'line-color': '#333',
+                'line-width': 1.5,
+                'line-dasharray': [3, 2]
+            }, filter: ['==', ['get', 'LOC_ID'], ''] }, labelLayerId);
 
+            // Phase 6: Lasso polygon source and layers
+            map.addSource('lasso-polygon', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+            map.addSource('lasso-cursor', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+            map.addSource('lasso-vertices', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
 
-            map.addSource('frontage', {
-                type: 'geojson',
-                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/frontages.geojson'
+            map.addLayer({ id: 'lasso-polygon-fill', type: 'fill', source: 'lasso-polygon', paint: {
+                'fill-color': 'rgba(66,90,112,0.15)'
+            }});
+            map.addLayer({ id: 'lasso-polygon-line', type: 'line', source: 'lasso-polygon', paint: {
+                'line-color': '#425A70',
+                'line-width': 2,
+                'line-dasharray': [3, 3]
+            }});
+            map.addLayer({ id: 'lasso-cursor-line', type: 'line', source: 'lasso-cursor', paint: {
+                'line-color': '#425A70',
+                'line-width': 1.5,
+                'line-dasharray': [2, 4],
+                'line-opacity': 0.6
+            }});
+            map.addLayer({ id: 'lasso-vertices-dots', type: 'circle', source: 'lasso-vertices', paint: {
+                'circle-radius': 4,
+                'circle-color': '#425A70',
+                'circle-stroke-color': 'white',
+                'circle-stroke-width': 1.5
+            }});
+
+            // Live cursor line while drawing
+            map.on('mousemove', (e) => {
+                if (lassoMode && lassoPoints.length > 0) {
+                    updateLassoCursorLine(e.lngLat);
+                }
             });
 
-                        map.addSource('hydro', {
-                type: 'geojson',
-                data: 'hydrowalth.geojson'
-            });
-
-            map.addSource('Boundary', {
-                type: 'geojson',
-                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/walthamoutline.geojson'
-            });
-
-
-
-            map.addSource('allparcels', {
-                type: 'geojson',
-                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/existinguse.geojson',
-                promoteId: "LOC_ID"
-            });
-
-            map.addSource('overlays', {
-                type: 'geojson',
-                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/overlays.geojson'
-            });
-
-            map.addSource('proposedzone', {
-                type: 'geojson',
-                data: 'ProposedZone_26_03_11.geojson'
-            });
-
-            map.addSource('water', {
-                type: 'geojson',
-                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/water2.geojson'
-            });
-
-            map.addSource('coverfront', {
-                type: 'geojson',
-                data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/coverfront.geojson'
-            });
-
-            map.addLayer({
-                id: 'Uses',
-                type: 'fill',
-                source: 'allparcels',
-                paint: {
-                    'fill-color': ['match', ['string', ['get', 'SimplLU']], ...usesAndColors, '#AAAAAA'],
-                    'fill-opacity': [
-                        "case",
-                        ["boolean", ["feature-state", "hover"], false],
-                        0.5,
-                        1],
-                }
-            }, labelLayerId);
-
-            map.addLayer({
-                id: 'Zones',
-                type: 'fill',
-                source: 'allparcels',
-                paint: {
-                    'fill-color': ['match', ['string', ['get', 'NAME']], ...zonesAndColors, '#AAAAAA'],
-                    'fill-opacity': [
-                        "case",
-                        ["boolean", ["feature-state", "hover"], false],
-                        0.5,
-                        1]
-                }
-            }, labelLayerId
-            );
-
-            map.addLayer({
-                id: 'Proposed-Zones',
-                type: 'fill',
-                source: 'proposedzone',
-                paint: {
-                    'fill-color': ['match', ['string', ['get', 'NAME']], ...zonesAndColors, '#AAAAAA'],
-                    'fill-opacity': [
-                        "case",
-                        ["boolean", ["feature-state", "hover"], false],
-                        0.5,
-                        1]
-                }
-            }, labelLayerId
-            );
-
-            map.addLayer({
-                id: 'Lot-Sizes-of-Residential-Parcels',
-                type: 'fill',
-                source: 'allparcels',
-                paint: {
-                    'fill-outline-color': 'white',
-                    'fill-color': [
-                        "case", ["==", ["get", "SQFT"], null], 'white',
-                        ["interpolate",
-                            ["linear"],
-                            ["get", "SQFT"],
-                            0,
-                            lotSizePalette[0],
-                            4000,
-                            lotSizePalette[1],
-                            5000,
-                            lotSizePalette[2],
-                            6000,
-                            lotSizePalette[3],
-                            7000,
-                            lotSizePalette[4],
-                            8000,
-                            lotSizePalette[5],
-                            9000,
-                            lotSizePalette[6],
-                            10000,
-                            lotSizePalette[7],
-                            15000,
-                            lotSizePalette[8],
-                            20000,
-                            lotSizePalette[9]
-                        ]],
-                    'fill-opacity': [
-                        "case",
-                        ["boolean", ["feature-state", "hover"], false],
-                        0.5,
-                        1],
-                }
-            }, labelLayerId);
-
-            map.addLayer({
-                id: 'Residential-Parcels-Smaller-than-Minimum-Lot-Size',
-                type: 'fill',
-                source: 'allparcels',
-                paint: {
-                    'fill-color': [
-                        'match',
-                        ['get', 'LotTooSmal'],
-                        1, 'rgba(0, 0, 0, .25)',
-                        'rgba(0, 0, 0, 0)' // default fallback color
-                    ]
-                }
-            }, labelLayerId);
-
-            map.addLayer({
-                id: 'hydro',
-                type: 'fill',
-                source: 'hydro',
-                paint: {
-                    'fill-color': '#d9eaf0'
-                }
-
-            }, labelLayerId);
-            map.addLayer({
-                id: 'Parcels',
-                type: 'fill',
-                source: 'allparcels',
-                paint: {
-                    'fill-outline-color': '#828282',
-                    'fill-color': 'transparent',
-                    'fill-opacity': 1,
-                }
-            }, labelLayerId);
-
-            map.addLayer({
-                id: 'Too-Little-Frontage',
-                type: 'line',
-                source: 'frontage',
-                paint: {
-                    'line-width': 4,
-                    'line-color': [
-                        'match',
-                        ['get', 'TooLilFrnt'],
-                        1, 'black',
-                        'transparent' // default fallback color
-                    ],
-                }
-            }, labelLayerId);
-
-            map.addLayer({
-                id: 'Too-Much-Coverage',
-                type: 'fill',
-                source: 'coverfront',
-                paint: {
-                    'fill-color': [
-                        'match',
-                        ['get', 'WalthamBuildingsv2_TooCovered'],
-                        "1", 'rgba(0, 0, 0, .25)',
-                        'rgba(0, 0, 0, 0)' // default fallback color
-                    ]
-                }
-            }, labelLayerId);
-
-            map.addLayer({
-                id: 'Too-Little-Setback',
-                type: 'fill',
-                source: 'coverfront',
-                paint: {
-                    'fill-color': [
-                        'match',
-                        ['get', 'WalthamBuildingsv2_TooLilSB'],
-                        "1", 'rgba(0, 0, 0, .25)',
-                        'rgba(0, 0, 0, 0)' // default fallback color
-                    ]
-                }
-            }, labelLayerId);
-
-
-            map.addLayer({
-                id: 'Overlay',
-                type: 'line',
-                source: 'overlays',
-                paint: {
-                    'line-width': 4,
-                    'line-color': [
-                        'match',
-                        ['get', 'NAME'],
-                        'ROD', 'black',
-                        'LCRAP', '#0040fe',
-                        'LCRA', '#21abe6',
-                        'MCMOD', '#9971ff',
-                        'MBTAW', '#006663',
-                        'transparent' // default fallback color
-                    ],
-                }
-            }, labelLayerId);
-
-            map.addLayer({
-                id: 'Boundary',
-                type: 'line',
-                source: 'Boundary',
-                paint: {
-                    'line-width': 2,
-                    'line-color': 'black',
-                }
-            }, labelLayerId);
-
-
-
-            window.addEventListener('resize', () => {
-                map.resize();
-            });
+            window.addEventListener('resize', () => { map.resize(); });
 
             map.setLayoutProperty('Too-Little-Frontage', 'visibility', 'none');
             map.setLayoutProperty('Residential-Parcels-Smaller-than-Minimum-Lot-Size', 'visibility', 'none');
@@ -601,68 +2465,14 @@
 
             const checkboxes = document.querySelectorAll('.layer-toggle');
 
-            const legends = {
-                'Too-Little-Frontage': 'frontageLegend',
-                'Residential-Parcels-Smaller-than-Minimum-Lot-Size': 'toosmallLegend',
-                'Lot-Sizes-of-Residential-Parcels': 'lotsizeLegend',
-                'Too-Little-Setback': 'toolittleSetbackLegend',
-                'Too-Much-Coverage': 'toomuchCoverageLegend',
-                'Zones': 'existzoneLegend',
-                'Overlay': 'overlayLegend',
-                'Proposed Zones': 'proposedLegend'
-            };
-
-            checkboxes.forEach((checkbox) => {
-                checkbox.addEventListener('change', () => {
-                    const layerId = checkbox.value;
-                    const visibility = checkbox.checked ? 'visible' : 'none';
-                    if (map.getLayer(layerId)) {
-                        map.setLayoutProperty(layerId, 'visibility', visibility);
-                        map.setLayoutProperty('settlement-major-label', 'visibility', 'visible');
-                        map.setLayoutProperty('settlement-subdivision-label', 'visibility', 'visible');
-                        map.setLayoutProperty('settlement-minor-label', 'visibility', 'visible');
-                        map.setLayoutProperty('road-label', 'visibility', 'visible');
-                    }
-
-                    // Instead of trying to show/hide predefined legends, let's dynamically rebuild
-                    const legendContainer = document.getElementById('legend-container');
-                    legendContainer.innerHTML = ''; // Clear all
-
-                    Array.from(checkboxes).forEach(cb => {
-                        if (cb.checked && legendEntries[cb.value]) {
-                            const entries = legendEntries[cb.value];
-
-                            const legendSection = document.createElement('div');
-                            legendSection.className = 'legend';
-
-                            const title = document.createElement('h4');
-                            title.textContent = cb.value.replace(/-/g, ' ');
-                            legendSection.appendChild(title);
-
-                            entries.forEach(entry => {
-                                const item = document.createElement('div');
-                                item.innerHTML = `
-                        <span style="background:${entry.color};"></span>${entry.label}
-                    `;
-                                legendSection.appendChild(item);
-                            });
-
-                            legendContainer.appendChild(legendSection);
-                        }
-                    });
-                });
-            });
-
             function rebuildLegend() {
                 const legendContainer = document.getElementById('legend-container');
-                legendContainer.innerHTML = ''; // Clear all
-
+                const legendBody = document.getElementById('legend-body');
+                legendBody.innerHTML = '';
                 let zoningLegendShown = false;
 
                 Array.from(checkboxes).forEach(cb => {
                     if (!cb.checked) return;
-
-                    // Show a single shared zoning legend for either layer
                     if (cb.value === 'Zones' || cb.value === 'Proposed-Zones') {
                         if (zoningLegendShown) return;
                         zoningLegendShown = true;
@@ -677,51 +2487,52 @@
                             item.innerHTML = `<span style="background:${entry.color};"></span>${entry.label}`;
                             legendSection.appendChild(item);
                         });
-                        legendContainer.appendChild(legendSection);
+                        legendBody.appendChild(legendSection);
                         return;
                     }
-
                     if (legendEntries[cb.value]) {
                         const entries = legendEntries[cb.value];
-
                         const legendSection = document.createElement('div');
                         legendSection.className = 'legend';
-
                         const title = document.createElement('h4');
-                        title.textContent = cb.value.replace(/-/g, ' ');
+                        title.textContent = legendTitleMap[cb.value] || cb.value.replace(/-/g, ' ');
                         legendSection.appendChild(title);
-
                         entries.forEach(entry => {
                             const item = document.createElement('div');
-                            item.innerHTML = `
-                    <span style="background:${entry.color};"></span>${entry.label}
-                `;
+                            item.innerHTML = `<span style="background:${entry.color};"></span>${entry.label}`;
                             legendSection.appendChild(item);
                         });
-
-                        legendContainer.appendChild(legendSection);
+                        legendBody.appendChild(legendSection);
                     }
                 });
+                legendContainer.style.display = legendBody.children.length > 0 ? '' : 'none';
             }
 
-            // 1. Rebuild legends when page loads
             rebuildLegend();
 
-            // 2. Also rebuild legends when user checks/unchecks
+            document.getElementById('legend-header').addEventListener('click', () => {
+                const body = document.getElementById('legend-body');
+                const icon = document.querySelector('#legend-header .toggle-icon');
+                body.classList.toggle('collapsed');
+                icon.innerHTML = body.classList.contains('collapsed') ? '&#9654;' : '&#9660;';
+            });
+
             checkboxes.forEach((checkbox) => {
                 checkbox.addEventListener('change', () => {
                     const layerId = checkbox.value;
                     const visibility = checkbox.checked ? 'visible' : 'none';
                     if (map.getLayer(layerId)) {
                         map.setLayoutProperty(layerId, 'visibility', visibility);
+                        map.setLayoutProperty('settlement-major-label', 'visibility', 'visible');
+                        map.setLayoutProperty('settlement-subdivision-label', 'visibility', 'visible');
+                        map.setLayoutProperty('settlement-minor-label', 'visibility', 'visible');
+                        map.setLayoutProperty('road-label', 'visibility', 'visible');
                     }
-                    rebuildLegend(); // Refresh the legend dynamically
+                    rebuildLegend();
                 });
             });
 
             let hoveredGeoId = null;
-
-
             const hoverLayers = [
                 { id: 'Zones', source: 'allparcels' },
                 { id: 'Lot-Sizes-of-Residential-Parcels', source: 'allparcels' },
@@ -732,74 +2543,116 @@
                 map.on('mousemove', id, (e) => {
                     if (e.features.length > 0) {
                         if (hoveredGeoId !== null) {
-                            map.setFeatureState(
-                                { source, id: hoveredGeoId },
-                                { hover: false }
-                            );
+                            map.setFeatureState({ source, id: hoveredGeoId }, { hover: false });
                         }
                         hoveredGeoId = e.features[0].id;
-                        map.setFeatureState(
-                            { source, id: hoveredGeoId },
-                            { hover: true }
-                        );
+                        map.setFeatureState({ source, id: hoveredGeoId }, { hover: true });
                     }
                 });
-
                 map.on('mouseleave', id, () => {
                     if (hoveredGeoId !== null) {
-                        map.setFeatureState(
-                            { source, id: hoveredGeoId },
-                            { hover: false }
-                        );
+                        map.setFeatureState({ source, id: hoveredGeoId }, { hover: false });
                     }
                     hoveredGeoId = null;
                 });
             });
 
+            // Pointer cursor on parcel hover
+            map.on('mousemove', 'Parcels', () => {
+                map.getCanvas().style.cursor = 'pointer';
+            });
+            map.on('mouseleave', 'Parcels', () => {
+                map.getCanvas().style.cursor = '';
+            });
 
-
-            map.on('click', (e) => {
-                const [selectedParcel] = map.queryRenderedFeatures(e.point, {
-                    layers: ["Zones", "Uses", "Lot-Sizes-of-Residential-Parcels"]
-                });
-
-                if (selectedParcel) {
-                    function sliceStringBySpaces(str, numSpaces) {
-                        const words = str.split(" ");
-                        const slicedWords = words.slice(0, numSpaces);
-                        return slicedWords.join(" ");
-                    }
-
-                    const address = selectedParcel.properties.Address.replace(/,/g, "");
-                    const num = 4;
-                    const result = sliceStringBySpaces(address, num);
-
-                    const zone = selectedParcel.properties.NAME;
-                    const displayZone = zone === null || zone === undefined ? 'No available data' : `Zoning district: ${zone}`;
-                    const use = selectedParcel.properties.SimplLU;
-                    const useDescription = useLabels[use] || "Unknown use";
-                    const displayUse = use === null || use === undefined ? 'Unknown use' : `Current use: ${useDescription}`;
-                    const lotSize = selectedParcel.properties.SQFT;
-                    const roundedLotSize = Math.round(lotSize)
-                    const displaySize = lotSize === null || lotSize === undefined ? 'No available data' : `Lot size: ${roundedLotSize.toLocaleString("en-US")} square feet`;
-
-
-                    new mapboxgl.Popup({ closeButton: true }, { clickToClose: true })
-                        .setLngLat(selectedParcel.geometry.coordinates[0][0])
-                        .setHTML(`
-                <div class="mapboxgl-popup">
-                <div class="mapboxgl-popup-close-button">x</div>
-                <div class="mapboxgl-popup-header">${result}</div>
-                <div class="mapboxgl-popup-content">${displayZone}<br>${displayUse}<br>${displaySize}
-                </div>
-            </div>`)
-                        .addTo(map);
+            // Lasso double-click handler
+            map.on('dblclick', (e) => {
+                if (lassoMode) {
+                    e.preventDefault();
+                    finishLasso();
+                    return;
                 }
             });
 
+            // Click handler with zone reassignment
+            map.on('click', (e) => {
+                // Lasso drawing mode
+                if (lassoMode) {
+                    addLassoPoint(e.lngLat);
+                    return;
+                }
+
+                // Click outside completed lasso clears it
+                if (lassoComplete) {
+                    if (!isClickInsideLasso(e.lngLat)) {
+                        cancelLasso();
+                    }
+                    return;
+                }
+                const features = map.queryRenderedFeatures(e.point, {
+                    layers: ["Parcels", "Zones", "Uses", "Lot-Sizes-of-Residential-Parcels"]
+                });
+                const selectedParcel = features[0];
+
+                if (selectedParcel) {
+                    const address = (selectedParcel.properties.Address || '').replace(/,/g, "");
+                    const shortAddr = address.split(" ").slice(0, 4).join(" ");
+
+                    const locId = selectedParcel.properties.LOC_ID;
+                    const zone = selectedParcel.properties.NAME;
+                    const overriddenZone = zoneOverrides.get(locId);
+                    const effectiveZone = overriddenZone || zone;
+
+                    const use = selectedParcel.properties.SimplLU;
+                    const useDescription = useLabels[use] || "Unknown use";
+                    const lotSize = selectedParcel.properties.SQFT;
+                    const roundedLotSize = lotSize ? Math.round(lotSize) : null;
+
+                    const pData = parcelByLocId.get(locId);
+                    const frontage = pData ? pData.f : null;
+                    const coverage = pData ? pData.c : null;
+
+                    let displayZone = zone ? `Zone: ${zone}` : 'No zone data';
+                    if (overriddenZone) {
+                        displayZone += ` <span class="popup-reassigned">(reassigned to ${overriddenZone})</span>`;
+                    }
+                    const displayUse = use ? `Use: ${useDescription}` : 'Unknown use';
+                    const displaySize = roundedLotSize ? `Lot: ${roundedLotSize.toLocaleString()} sqft` : '';
+                    const displayFront = frontage ? `Frontage: ${Math.round(frontage)} ft` : '';
+                    const displayCov = coverage !== null ? `Coverage: ${Math.round(coverage * 100)}%` : '';
+
+                    const zoneOptions = zones.map(z =>
+                        `<option value="${z}" ${z === effectiveZone ? 'selected' : ''}>${z}</option>`
+                    ).join('');
+
+                    const reassignHTML = panelView === 'editing' ? `
+                                <label style="font-size:11px;margin-top:6px;display:block;">
+                                    Reassign zone:
+                                    <select class="popup-zone-select" onchange="reassignZone('${locId}', '${zone}', this.value)">
+                                        ${zoneOptions}
+                                    </select>
+                                </label>` : '';
+
+                    const popupHTML = `
+                        <div class="mapboxgl-popup">
+                            <div class="mapboxgl-popup-header">${shortAddr}</div>
+                            <div class="mapboxgl-popup-content">
+                                ${displayZone}<br>
+                                ${displayUse}<br>
+                                ${displaySize ? displaySize + '<br>' : ''}
+                                ${displayFront ? displayFront + '<br>' : ''}
+                                ${displayCov ? displayCov + '<br>' : ''}
+                                ${reassignHTML}
+                            </div>
+                        </div>`;
+
+                    new mapboxgl.Popup({ closeButton: true })
+                        .setLngLat(e.lngLat)
+                        .setHTML(popupHTML)
+                        .addTo(map);
+                }
+            });
         });
-
-
     </script>
 
 </body>
