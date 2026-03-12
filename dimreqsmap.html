@@ -125,6 +125,9 @@
     <div id="container">
         <div id="layer-controls">
             <label><input type="checkbox" class="layer-toggle" value="Parcels" checked> Parcels</label><br>
+            <label><input type="checkbox" class="layer-toggle" value="Proposed-Zones" checked> Proposed
+                zoning</label><br>
+
             <label><input type="checkbox" class="layer-toggle" value="Lot-Sizes-of-Residential-Parcels"> Lot
                 size</label><br>
             <label><input type="checkbox" class="layer-toggle" value="Too-Little-Frontage"> Insufficient
@@ -136,7 +139,7 @@
                 setback</label><br>
             <label><input type="checkbox" class="layer-toggle" value="Too-Much-Coverage"> Building coverage greater than
                 maximum allowed</label><br>
-            <label><input type="checkbox" class="layer-toggle" value="Zones" checked> Existing zoning</label><br>
+            <label><input type="checkbox" class="layer-toggle" value="Zones"> Existing zoning</label><br>
             <label><input type="checkbox" class="layer-toggle" value="Uses"> Existing use</label>
         </div>
     </div>
@@ -213,6 +216,7 @@
         const usesAndColors = uses.flatMap((use, i) => [use, useColors[i]]);
 
         const zones = ['BA', 'BB', 'BC', 'C', 'CR', 'HR1', 'HR2', 'I', 'LC', 'RA1', 'RA2', 'RA3', 'RA4', 'RB', 'RC', 'RD']
+        const zonesProps = ['B1', 'MU', 'BC', 'C', 'CR', 'HR1', 'HR2', 'I', 'INST', 'C/RD', 'R1', 'R2', 'R3', 'R4']
 
         const zoneColors = [
             "#ffb3b3", // BA
@@ -233,25 +237,43 @@
             "#a55a00"  // RD
         ];
 
+        const proposedColors = [
+            "#ffb3b3", // B1
+            "#f26b6b", // MU
+            "#a82940", // BC
+            "#f7d8d8", // C
+            "#bdd66b", // CR
+            "#0057e7", // HR1
+            "#734ac3", // HR2
+            "#b3b3b3", // I
+            "#36adaf", // INST
+            "#b7a4ff", // C/RD
+            "#fff9dc", // R1
+            "#f4dd63", // R2
+            "#f5b72d", // R3
+            "#c87a12", // R4
+        ];
+
         const zonesAndColors = zones.flatMap((zone, i) => [zone, zoneColors[i]]);
+        const zonesAndColorsProps = zonesProps.flatMap((zonesProp, i) => [zonesProp, proposedColors[i]]);
 
         mapboxgl.accessToken = 'pk.eyJ1Ijoic2FyYWJyZW50IiwiYSI6ImNtMHpsb2Q4NTAwemoybHExbnB6eHVvZ2kifQ.nH0hUSv3IGzX6MkYB_cSmA';
         const map = new mapboxgl.Map({
             container: 'map',
             // Choose from Mapbox's core styles, or make your own style with Mapbox Studio
-            style: 'mapbox://styles/mapbox/light-v11',
-            zoom: 15,
-            center: [-71.236618, 42.378266],
+            style: 'mapbox://styles/communityscale/cmcuwuwcv00xz01s1gn7xccqi',
+            zoom: 13,
+            center: [-71.238856,42.387311],
             projection: 'globe'
         });
 
         const lotSizeBreakpoints = [0, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 15000, 20000];
         const legendEntries = {
             'Too-Little-Setback': [
-                {  color: 'rgba(0, 0, 0, .2)', label: 'Front setback shallower than required by zone' }
+                { color: 'rgba(0, 0, 0, .2)', label: 'Front setback shallower than required by zone' }
             ],
             'Too-Much-Coverage': [
-                {  color: 'rgba(0, 0, 0, .2)', label: 'Building coverage greater than maximum allowed' }
+                { color: 'rgba(0, 0, 0, .2)', label: 'Building coverage greater than maximum allowed' }
             ],
             'Too-Little-Frontage': [
                 { color: 'black', label: 'Frontage narrower than required by zone' }
@@ -271,7 +293,7 @@
                 { color: lotSizePalette[8], label: '15,000-20,000 sqft' },
                 { color: lotSizePalette[9], label: '20,000+ sqft' }
             ],
-            'Zones': zones.map((zone, i) => ({
+            'Zoning': zones.map((zone, i) => ({
                 color: zoneColors[i],
                 label: zone
             })),
@@ -300,6 +322,16 @@
             ]
         };
 
+                    let labelLayerId; //pull text fields on top!!
+                map.on('style.load', () => {
+            const layers = map.getStyle().layers;
+            for (const layer of layers) {
+                if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+                    labelLayerId = layer.id;
+                    break;
+                }
+            }
+        });
         map.on('load', () => {
             // Set the default atmosphere style
             map.setFog({});
@@ -319,10 +351,17 @@
                 data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/main/frontages.geojson'
             });
 
+                        map.addSource('hydro', {
+                type: 'geojson',
+                data: 'hydrowalth.geojson'
+            });
+
             map.addSource('Boundary', {
                 type: 'geojson',
                 data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/walthamoutline.geojson'
             });
+
+
 
             map.addSource('allparcels', {
                 type: 'geojson',
@@ -335,6 +374,11 @@
                 data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/overlays.geojson'
             });
 
+            map.addSource('proposedzone', {
+                type: 'geojson',
+                data: 'ProposedZone_26_03_11.geojson'
+            });
+
             map.addSource('water', {
                 type: 'geojson',
                 data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/water2.geojson'
@@ -344,8 +388,6 @@
                 type: 'geojson',
                 data: 'https://raw.githubusercontent.com/CommunityScale/Waltham/refs/heads/main/coverfront.geojson'
             });
-
-
 
             map.addLayer({
                 id: 'Uses',
@@ -359,7 +401,7 @@
                         0.5,
                         1],
                 }
-            });
+            }, labelLayerId);
 
             map.addLayer({
                 id: 'Zones',
@@ -373,7 +415,22 @@
                         0.5,
                         1]
                 }
-            }
+            }, labelLayerId
+            );
+
+            map.addLayer({
+                id: 'Proposed-Zones',
+                type: 'fill',
+                source: 'proposedzone',
+                paint: {
+                    'fill-color': ['match', ['string', ['get', 'NAME']], ...zonesAndColors, '#AAAAAA'],
+                    'fill-opacity': [
+                        "case",
+                        ["boolean", ["feature-state", "hover"], false],
+                        0.5,
+                        1]
+                }
+            }, labelLayerId
             );
 
             map.addLayer({
@@ -414,7 +471,7 @@
                         0.5,
                         1],
                 }
-            });
+            }, labelLayerId);
 
             map.addLayer({
                 id: 'Residential-Parcels-Smaller-than-Minimum-Lot-Size',
@@ -428,19 +485,27 @@
                         'rgba(0, 0, 0, 0)' // default fallback color
                     ]
                 }
-            });
+            }, labelLayerId);
 
+            map.addLayer({
+                id: 'hydro',
+                type: 'fill',
+                source: 'hydro',
+                paint: {
+                    'fill-color': '#d9eaf0'
+                }
 
+            }, labelLayerId);
             map.addLayer({
                 id: 'Parcels',
                 type: 'fill',
                 source: 'allparcels',
                 paint: {
-                    'fill-outline-color': 'black',
+                    'fill-outline-color': '#828282',
                     'fill-color': 'transparent',
                     'fill-opacity': 1,
                 }
-            });
+            }, labelLayerId);
 
             map.addLayer({
                 id: 'Too-Little-Frontage',
@@ -455,7 +520,7 @@
                         'transparent' // default fallback color
                     ],
                 }
-            });
+            }, labelLayerId);
 
             map.addLayer({
                 id: 'Too-Much-Coverage',
@@ -469,7 +534,7 @@
                         'rgba(0, 0, 0, 0)' // default fallback color
                     ]
                 }
-            });
+            }, labelLayerId);
 
             map.addLayer({
                 id: 'Too-Little-Setback',
@@ -483,7 +548,7 @@
                         'rgba(0, 0, 0, 0)' // default fallback color
                     ]
                 }
-            });
+            }, labelLayerId);
 
 
             map.addLayer({
@@ -503,7 +568,7 @@
                         'transparent' // default fallback color
                     ],
                 }
-            });
+            }, labelLayerId);
 
             map.addLayer({
                 id: 'Boundary',
@@ -513,24 +578,20 @@
                     'line-width': 2,
                     'line-color': 'black',
                 }
+            }, labelLayerId);
+
+
+
+            window.addEventListener('resize', () => {
+                map.resize();
             });
 
-            map.addLayer({
-                id: 'water',
-                type: 'fill',
-                source: 'water'
-            });
-
-window.addEventListener('resize', () => {
-        map.resize();
-        });
-            
             map.setLayoutProperty('Too-Little-Frontage', 'visibility', 'none');
             map.setLayoutProperty('Residential-Parcels-Smaller-than-Minimum-Lot-Size', 'visibility', 'none');
             map.setLayoutProperty('Lot-Sizes-of-Residential-Parcels', 'visibility', 'none');
             map.setLayoutProperty('Too-Much-Coverage', 'visibility', 'none');
             map.setLayoutProperty('Too-Little-Setback', 'visibility', 'none');
-            //map.setLayoutProperty('Zones', 'visibility', 'none');
+            map.setLayoutProperty('Zones', 'visibility', 'none');
             map.setLayoutProperty('Overlay', 'visibility', 'none');
             map.setLayoutProperty('Uses', 'visibility', 'none');
             map.setLayoutProperty('settlement-major-label', 'visibility', 'visible');
@@ -547,7 +608,8 @@ window.addEventListener('resize', () => {
                 'Too-Little-Setback': 'toolittleSetbackLegend',
                 'Too-Much-Coverage': 'toomuchCoverageLegend',
                 'Zones': 'existzoneLegend',
-                'Overlay': 'overlayLegend'
+                'Overlay': 'overlayLegend',
+                'Proposed Zones': 'proposedLegend'
             };
 
             checkboxes.forEach((checkbox) => {
@@ -595,8 +657,31 @@ window.addEventListener('resize', () => {
                 const legendContainer = document.getElementById('legend-container');
                 legendContainer.innerHTML = ''; // Clear all
 
+                let zoningLegendShown = false;
+
                 Array.from(checkboxes).forEach(cb => {
-                    if (cb.checked && legendEntries[cb.value]) {
+                    if (!cb.checked) return;
+
+                    // Show a single shared zoning legend for either layer
+                    if (cb.value === 'Zones' || cb.value === 'Proposed-Zones') {
+                        if (zoningLegendShown) return;
+                        zoningLegendShown = true;
+                        const entries = legendEntries['Zoning'];
+                        const legendSection = document.createElement('div');
+                        legendSection.className = 'legend';
+                        const title = document.createElement('h4');
+                        title.textContent = 'Zoning';
+                        legendSection.appendChild(title);
+                        entries.forEach(entry => {
+                            const item = document.createElement('div');
+                            item.innerHTML = `<span style="background:${entry.color};"></span>${entry.label}`;
+                            legendSection.appendChild(item);
+                        });
+                        legendContainer.appendChild(legendSection);
+                        return;
+                    }
+
+                    if (legendEntries[cb.value]) {
                         const entries = legendEntries[cb.value];
 
                         const legendSection = document.createElement('div');
@@ -636,6 +721,7 @@ window.addEventListener('resize', () => {
 
             let hoveredGeoId = null;
 
+
             const hoverLayers = [
                 { id: 'Zones', source: 'allparcels' },
                 { id: 'Lot-Sizes-of-Residential-Parcels', source: 'allparcels' },
@@ -669,6 +755,7 @@ window.addEventListener('resize', () => {
                     hoveredGeoId = null;
                 });
             });
+
 
 
             map.on('click', (e) => {
