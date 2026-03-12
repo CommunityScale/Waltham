@@ -1360,9 +1360,9 @@
                 const prop = proposedResults[z];
                 if (cur.total === 0) return;
 
-                const lot = compDelta(cur.lotNC, cur.lotTested, prop.lotNC, prop.lotTested);
-                const front = compDelta(cur.frontNC, cur.frontTested, prop.frontNC, prop.frontTested);
-                const cov = compDelta(cur.covNC, cur.covTested, prop.covNC, prop.covTested);
+                const lot = compDelta(cur.lotNC, cur.total, prop.lotNC, prop.total);
+                const front = compDelta(cur.frontNC, cur.total, prop.frontNC, prop.total);
+                const cov = compDelta(cur.covNC, cur.total, prop.covNC, prop.total);
                 const any = compDelta(cur.anyNC, cur.total, prop.anyNC, prop.total);
 
                 const anyChanged = any.cls !== '';
@@ -1495,14 +1495,16 @@
                     if (p.s < req.minLot) { results[zone].lotNC++; anyNC = true; }
                 }
 
-                if (req.minFrontage !== null && p.f !== null) {
+                if (req.minFrontage !== null) {
+                    const front = p.f !== null ? p.f : 0;
                     results[zone].frontTested++;
-                    if (p.f < req.minFrontage) { results[zone].frontNC++; anyNC = true; }
+                    if (front < req.minFrontage) { results[zone].frontNC++; anyNC = true; }
                 }
 
-                if (req.maxCoverage !== null && p.c !== null) {
+                if (req.maxCoverage !== null) {
+                    const cov = p.c !== null ? p.c : 0;
                     results[zone].covTested++;
-                    if (p.c > req.maxCoverage) { results[zone].covNC++; anyNC = true; }
+                    if (cov > req.maxCoverage) { results[zone].covNC++; anyNC = true; }
                 }
 
                 if (anyNC) results[zone].anyNC++;
@@ -1529,9 +1531,9 @@
         function getSortValue(r, col) {
             if (col === 0) return r.zone;
             if (col === 1) return r.total;
-            if (col === 2) return r.lotTested > 0 ? r.lotNC / r.lotTested : -1;
-            if (col === 3) return r.frontTested > 0 ? r.frontNC / r.frontTested : -1;
-            if (col === 4) return r.covTested > 0 ? r.covNC / r.covTested : -1;
+            if (col === 2) return r.total > 0 ? r.lotNC / r.total : -1;
+            if (col === 3) return r.total > 0 ? r.frontNC / r.total : -1;
+            if (col === 4) return r.total > 0 ? r.covNC / r.total : -1;
             if (col === 5) return r.total > 0 ? r.anyNC / r.total : -1;
             return 0;
         }
@@ -1617,32 +1619,33 @@
 
             rows.forEach((r, i) => {
                 const isWorst = i === worstIdx;
-                const lotInfo = pctWithCount(r.lotNC, r.lotTested);
-                const frontInfo = pctWithCount(r.frontNC, r.frontTested);
-                const covInfo = pctWithCount(r.covNC, r.covTested);
+                const req = (ZONE_REQUIREMENTS[r.zone] || {});
+                const lotInfo = req.minLot !== null ? pctWithCount(r.lotNC, r.total) : { text: '-', pct: 0 };
+                const frontInfo = req.minFrontage !== null ? pctWithCount(r.frontNC, r.total) : { text: '-', pct: 0 };
+                const covInfo = req.maxCoverage !== null ? pctWithCount(r.covNC, r.total) : { text: '-', pct: 0 };
                 const anyInfo = pctWithCount(r.anyNC, r.total);
 
                 html += `<tr class="${isWorst ? 'worst-row' : ''}" data-zone="${r.zone}">
                     <td>${r.zone}</td>
                     <td>${r.total.toLocaleString()}</td>
-                    <td class="bar-cell ${pctClass(r.lotNC, r.lotTested)}"><div class="bar-fill" style="width:${lotInfo.pct}%;background:${barFillColor(lotInfo.pct)}"></div><span class="bar-text">${lotInfo.text} <span class="count-detail">${lotInfo.count || ''}</span></span></td>
-                    <td class="bar-cell ${pctClass(r.frontNC, r.frontTested)}"><div class="bar-fill" style="width:${frontInfo.pct}%;background:${barFillColor(frontInfo.pct)}"></div><span class="bar-text">${frontInfo.text} <span class="count-detail">${frontInfo.count || ''}</span></span></td>
-                    <td class="bar-cell ${pctClass(r.covNC, r.covTested)}"><div class="bar-fill" style="width:${covInfo.pct}%;background:${barFillColor(covInfo.pct)}"></div><span class="bar-text">${covInfo.text} <span class="count-detail">${covInfo.count || ''}</span></span></td>
+                    <td class="bar-cell ${pctClass(r.lotNC, r.total)}"><div class="bar-fill" style="width:${lotInfo.pct}%;background:${barFillColor(lotInfo.pct)}"></div><span class="bar-text">${lotInfo.text} <span class="count-detail">${lotInfo.count || ''}</span></span></td>
+                    <td class="bar-cell ${pctClass(r.frontNC, r.total)}"><div class="bar-fill" style="width:${frontInfo.pct}%;background:${barFillColor(frontInfo.pct)}"></div><span class="bar-text">${frontInfo.text} <span class="count-detail">${frontInfo.count || ''}</span></span></td>
+                    <td class="bar-cell ${pctClass(r.covNC, r.total)}"><div class="bar-fill" style="width:${covInfo.pct}%;background:${barFillColor(covInfo.pct)}"></div><span class="bar-text">${covInfo.text} <span class="count-detail">${covInfo.count || ''}</span></span></td>
                     <td class="bar-cell ${pctClass(r.anyNC, r.total)}"><div class="bar-fill" style="width:${anyInfo.pct}%;background:${barFillColor(anyInfo.pct)}"></div><span class="bar-text">${anyInfo.text} <span class="count-detail">${anyInfo.count || ''}</span></span></td>
                 </tr>`;
             });
 
-            const tLot = pctWithCount(totals.lotNC, totals.lotTested);
-            const tFront = pctWithCount(totals.frontNC, totals.frontTested);
-            const tCov = pctWithCount(totals.covNC, totals.covTested);
+            const tLot = pctWithCount(totals.lotNC, totals.total);
+            const tFront = pctWithCount(totals.frontNC, totals.total);
+            const tCov = pctWithCount(totals.covNC, totals.total);
             const tAny = pctWithCount(totals.anyNC, totals.total);
 
             html += `<tr class="total-row">
                 <td>Total</td>
                 <td>${totals.total.toLocaleString()}</td>
-                <td class="${pctClass(totals.lotNC, totals.lotTested)}">${tLot.text} <span class="count-detail">${tLot.count || ''}</span></td>
-                <td class="${pctClass(totals.frontNC, totals.frontTested)}">${tFront.text} <span class="count-detail">${tFront.count || ''}</span></td>
-                <td class="${pctClass(totals.covNC, totals.covTested)}">${tCov.text} <span class="count-detail">${tCov.count || ''}</span></td>
+                <td class="${pctClass(totals.lotNC, totals.total)}">${tLot.text} <span class="count-detail">${tLot.count || ''}</span></td>
+                <td class="${pctClass(totals.frontNC, totals.total)}">${tFront.text} <span class="count-detail">${tFront.count || ''}</span></td>
+                <td class="${pctClass(totals.covNC, totals.total)}">${tCov.text} <span class="count-detail">${tCov.count || ''}</span></td>
                 <td class="${pctClass(totals.anyNC, totals.total)}">${tAny.text} <span class="count-detail">${tAny.count || ''}</span></td>
             </tr></table>`;
 
@@ -1688,8 +1691,8 @@
                 total++;
                 let nc = false;
                 if (req.minLot !== null && p.s !== null && p.s < req.minLot) nc = true;
-                if (req.minFrontage !== null && p.f !== null && p.f < req.minFrontage) nc = true;
-                if (req.maxCoverage !== null && p.c !== null && p.c > req.maxCoverage) nc = true;
+                if (req.minFrontage !== null && (p.f !== null ? p.f : 0) < req.minFrontage) nc = true;
+                if (req.maxCoverage !== null && (p.c !== null ? p.c : 0) > req.maxCoverage) nc = true;
                 if (nc) anyNC++;
             });
             return { total, pct: total > 0 ? Math.round(anyNC / total * 100) : 0, anyNC };
@@ -1873,12 +1876,12 @@
                 const cur = currentResults[z];
                 const prop = proposedResults[z];
                 if (cur.total === 0) return;
-                const cLot = pct(cur.lotNC, cur.lotTested);
-                const pLot = pct(prop.lotNC, prop.lotTested);
-                const cFront = pct(cur.frontNC, cur.frontTested);
-                const pFront = pct(prop.frontNC, prop.frontTested);
-                const cCov = pct(cur.covNC, cur.covTested);
-                const pCov = pct(prop.covNC, prop.covTested);
+                const cLot = pct(cur.lotNC, cur.total);
+                const pLot = pct(prop.lotNC, prop.total);
+                const cFront = pct(cur.frontNC, cur.total);
+                const pFront = pct(prop.frontNC, prop.total);
+                const cCov = pct(cur.covNC, cur.total);
+                const pCov = pct(prop.covNC, prop.total);
                 const cAny = pct(cur.anyNC, cur.total);
                 const pAny = pct(prop.anyNC, prop.total);
                 const delta = (a, b) => (a !== '' && b !== '') ? b - a : '';
